@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Card,
@@ -83,6 +82,21 @@ const Dashboard = () => {
       date: '2024-04-05',
       participants: '300+',
       mode: 'Online',
+    },
+  ];
+
+  const upcomingCertifications = [
+    {
+      name: 'AWS Solutions Architect',
+      provider: 'Amazon Web Services',
+      date: '2024-04-10',
+      level: 'Associate',
+    },
+    {
+      name: 'Python Professional',
+      provider: 'Python Institute',
+      date: '2024-04-15',
+      level: 'Advanced',
     },
   ];
 
@@ -184,6 +198,44 @@ const Dashboard = () => {
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Date: {hackathon.date}
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Upcoming Certification Exams */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl">Upcoming Certification Exams</CardTitle>
+              <CardDescription>Enhance your qualifications</CardDescription>
+            </div>
+            <Button variant="outline" size="sm">
+              Schedule Exam
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {upcomingCertifications.map((cert, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between border-b last:border-0 pb-4 last:pb-0"
+              >
+                <div className="flex items-center gap-4">
+                  <GraduationCap className="h-8 w-8 text-muted-foreground" />
+                  <div>
+                    <h3 className="font-semibold">{cert.name}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {cert.provider} • {cert.level}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Exam Date: {cert.date}
                 </div>
               </div>
             ))}
