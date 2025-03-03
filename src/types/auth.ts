@@ -8,4 +8,11 @@ export interface User {
   role: UserRole;
   department?: string;
   company?: string;
+  isVerified?: boolean;
+}
+
+// Admin credentials
+export interface AdminCredentials {
+  email: string;
+  password: string;
 }
