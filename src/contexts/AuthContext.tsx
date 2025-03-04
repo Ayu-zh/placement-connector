@@ -8,6 +8,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   adminLogin: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  updateUserProfile: (name: string, email: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,12 +39,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
+  const updateUserProfile = (name: string, email: string) => {
+    if (user) {
+      setUser({
+        ...user,
+        name,
+        email
+      });
+    }
+  };
+
   const logout = () => {
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, adminLogin, logout }}>
+    <AuthContext.Provider value={{ user, login, adminLogin, logout, updateUserProfile }}>
       {children}
     </AuthContext.Provider>
   );

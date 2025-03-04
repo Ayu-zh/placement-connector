@@ -29,3 +29,14 @@ export interface Student {
   status: 'active' | 'inactive' | 'suspended';
   verified: boolean;
 }
+
+// Certification interface
+export interface Certification {
+  id: string;
+  name: string;
+  provider: string;
+  description: string;
+  skillsGained: string[];
+  duration: string;
+  isActive: boolean;
+}

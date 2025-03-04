@@ -1,5 +1,4 @@
-
-import { Job, Student, StudentCredentials } from '@/types/backend';
+import { Job, Student, StudentCredentials, Certification } from '@/types/backend';
 import { User, AdminCredentials } from '@/types/auth';
 
 // Mock database using localStorage
@@ -105,6 +104,39 @@ const initializeDatabase = () => {
       { userId: 's3', email: 'ajay.k@college.edu', password: 'password123' },
       { userId: 's4', email: 'neha.g@college.edu', password: 'password123' },
       { userId: 's5', email: 'vikram.s@college.edu', password: 'password123' },
+    ]));
+  }
+
+  // Initialize certifications if not already present
+  if (!localStorage.getItem('certifications')) {
+    localStorage.setItem('certifications', JSON.stringify([
+      {
+        id: 'cert1',
+        name: 'AWS Certified Solutions Architect',
+        provider: 'Amazon Web Services',
+        description: 'Validates expertise in designing distributed systems on AWS',
+        skillsGained: ['Cloud Architecture', 'AWS Services', 'Security Best Practices'],
+        duration: '3 months',
+        isActive: true,
+      },
+      {
+        id: 'cert2',
+        name: 'Microsoft Azure Developer Associate',
+        provider: 'Microsoft',
+        description: 'For developers who design, build, test, and maintain cloud applications',
+        skillsGained: ['Azure Services', 'Cloud Development', 'Secure Solutions'],
+        duration: '2 months',
+        isActive: true,
+      },
+      {
+        id: 'cert3',
+        name: 'Google Cloud Professional Data Engineer',
+        provider: 'Google Cloud',
+        description: 'For professionals who design and build data processing systems',
+        skillsGained: ['Data Engineering', 'Machine Learning', 'Big Data'],
+        duration: '4 months',
+        isActive: false,
+      }
     ]));
   }
 };
@@ -262,5 +294,60 @@ export const ApiService = {
       
       throw new Error('Student not found');
     }
+  },
+
+  // Certifications API
+  certifications: {
+    getAll: async (): Promise<Certification[]> => {
+      return JSON.parse(localStorage.getItem('certifications') || '[]');
+    },
+    
+    add: async (certification: Omit<Certification, 'id'>): Promise<Certification> => {
+      const certifications = JSON.parse(localStorage.getItem('certifications') || '[]') as Certification[];
+      const newId = `cert${Math.floor(Math.random() * 10000)}`;
+      
+      const newCertification: Certification = {
+        id: newId,
+        ...certification
+      };
+      
+      certifications.push(newCertification);
+      localStorage.setItem('certifications', JSON.stringify(certifications));
+      return newCertification;
+    },
+    
+    update: async (certification: Certification): Promise<Certification> => {
+      const certifications = JSON.parse(localStorage.getItem('certifications') || '[]') as Certification[];
+      const updatedCertifications = certifications.map(c => c.id === certification.id ? certification : c);
+      localStorage.setItem('certifications', JSON.stringify(updatedCertifications));
+      return certification;
+    },
+    
+    delete: async (id: string): Promise<void> => {
+      const certifications = JSON.parse(localStorage.getItem('certifications') || '[]') as Certification[];
+      const filteredCertifications = certifications.filter(c => c.id !== id);
+      localStorage.setItem('certifications', JSON.stringify(filteredCertifications));
+    },
+    
+    toggleActive: async (id: string): Promise<Certification> => {
+      const certifications = JSON.parse(localStorage.getItem('certifications') || '[]') as Certification[];
+      const certification = certifications.find(c => c.id === id);
+      
+      if (certification) {
+        certification.isActive = !certification.isActive;
+        const updatedCertifications = certifications.map(c => c.id === id ? certification : c);
+        localStorage.setItem('certifications', JSON.stringify(updatedCertifications));
+        return certification;
+      }
+      
+      throw new Error('Certification not found');
+    }
+  },
+  
+  // Password validation
+  validatePassword: async (userId: string, password: string): Promise<boolean> => {
+    const credentials = JSON.parse(localStorage.getItem('studentCredentials') || '[]') as StudentCredentials[];
+    const credential = credentials.find(c => c.userId === userId && c.password === password);
+    return !!credential;
   }
 };

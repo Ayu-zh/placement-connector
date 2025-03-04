@@ -1,13 +1,15 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Navigate } from 'react-router-dom';
-import { User, Users, Building, Briefcase, BarChart3, AlertCircle } from 'lucide-react';
+import { User, Users, Building, Briefcase, BarChart3, AlertCircle, Award } from 'lucide-react';
 import { AdminJobManagement } from '@/components/admin/AdminJobManagement';
 import { AdminStudentManagement } from '@/components/admin/AdminStudentManagement';
 import { AdminStatistics } from '@/components/admin/AdminStatistics';
+import { AdminCertificationManagement } from '@/components/admin/AdminCertificationManagement';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -28,10 +30,11 @@ const AdminDashboard = () => {
       </div>
 
       <Tabs defaultValue="overview" onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-4 w-full max-w-3xl">
+        <TabsList className="grid grid-cols-5 w-full max-w-4xl">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
+          <TabsTrigger value="certifications">Certifications</TabsTrigger>
           <TabsTrigger value="statistics">Statistics</TabsTrigger>
         </TabsList>
         
@@ -124,6 +127,10 @@ const AdminDashboard = () => {
         
         <TabsContent value="students">
           <AdminStudentManagement />
+        </TabsContent>
+        
+        <TabsContent value="certifications">
+          <AdminCertificationManagement />
         </TabsContent>
         
         <TabsContent value="statistics">

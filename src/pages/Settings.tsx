@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { ApiService } from "@/services/api";
 
 const Settings = () => {
   const { user } = useAuth();
@@ -13,21 +14,82 @@ const Settings = () => {
   
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [verificationPassword, setVerificationPassword] = useState('');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleProfileUpdate = (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would call an API to update the user profile
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been updated successfully.",
-    });
+    
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update your profile.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Require password verification for email changes
+    if (email !== user.email && !verificationPassword) {
+      toast({
+        title: "Password Required",
+        description: "Please enter your current password to change your email.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // If email is being changed, validate the password
+      if (email !== user.email) {
+        const isPasswordValid = await ApiService.validatePassword(user.id, verificationPassword);
+        
+        if (!isPasswordValid) {
+          toast({
+            title: "Invalid Password",
+            description: "The password you entered is incorrect.",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // In a real app, this would call an API to update the user profile
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been updated successfully.",
+      });
+      
+      // Reset verification password after successful update
+      setVerificationPassword('');
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "There was an error updating your profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handlePasswordUpdate = (e: React.FormEvent) => {
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to update your password.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (newPassword !== confirmPassword) {
       toast({
@@ -38,16 +100,41 @@ const Settings = () => {
       return;
     }
     
-    // In a real app, this would call an API to update the password
-    toast({
-      title: "Password Updated",
-      description: "Your password has been updated successfully.",
-    });
+    setIsSubmitting(true);
     
-    // Reset form
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    try {
+      // Validate the current password
+      const isPasswordValid = await ApiService.validatePassword(user.id, currentPassword);
+      
+      if (!isPasswordValid) {
+        toast({
+          title: "Invalid Password",
+          description: "Your current password is incorrect.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // In a real app, this would call an API to update the password
+      toast({
+        title: "Password Updated",
+        description: "Your password has been updated successfully.",
+      });
+      
+      // Reset form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "There was an error updating your password.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -100,8 +187,27 @@ const Settings = () => {
                   />
                 </div>
                 
-                <Button type="submit" className="w-full md:w-auto">
-                  Update Profile
+                {email !== user?.email && (
+                  <div className="space-y-2">
+                    <label htmlFor="verificationPassword" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Current Password <span className="text-red-500">*</span>
+                    </label>
+                    <Input
+                      id="verificationPassword"
+                      type="password"
+                      value={verificationPassword}
+                      onChange={(e) => setVerificationPassword(e.target.value)}
+                      placeholder="Enter current password to verify"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Your current password is required to change your email address.
+                    </p>
+                  </div>
+                )}
+                
+                <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+                  {isSubmitting ? "Updating..." : "Update Profile"}
                 </Button>
               </form>
             </CardContent>
@@ -120,7 +226,7 @@ const Settings = () => {
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div className="space-y-2">
                   <label htmlFor="currentPassword" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    Current Password
+                    Current Password <span className="text-red-500">*</span>
                   </label>
                   <Input
                     id="currentPassword"
@@ -128,6 +234,7 @@ const Settings = () => {
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="Your current password"
+                    required
                   />
                 </div>
                 
@@ -141,6 +248,7 @@ const Settings = () => {
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="Your new password"
+                    required
                   />
                 </div>
                 
@@ -154,11 +262,12 @@ const Settings = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Confirm your new password"
+                    required
                   />
                 </div>
                 
-                <Button type="submit" className="w-full md:w-auto">
-                  Update Password
+                <Button type="submit" className="w-full md:w-auto" disabled={isSubmitting}>
+                  {isSubmitting ? "Updating..." : "Update Password"}
                 </Button>
               </form>
             </CardContent>
