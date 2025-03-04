@@ -1,4 +1,4 @@
-import { Job, Student, StudentCredentials, Certification } from '@/types/backend';
+import { Job, Student, StudentCredentials, Certification, Hackathon } from '@/types/backend';
 import { User, AdminCredentials } from '@/types/auth';
 
 // Mock database using localStorage
@@ -136,6 +136,28 @@ const initializeDatabase = () => {
         skillsGained: ['Data Engineering', 'Machine Learning', 'Big Data'],
         duration: '4 months',
         isActive: false,
+      }
+    ]));
+  }
+
+  // Initialize hackathons if not already present
+  if (!localStorage.getItem('hackathons')) {
+    localStorage.setItem('hackathons', JSON.stringify([
+      {
+        id: 'hack1',
+        name: 'CodeFest 2024',
+        date: '2024-03-30',
+        participants: '500+',
+        mode: 'Hybrid',
+        registrationUrl: 'https://unstop.com/hackathons/codefest-2024'
+      },
+      {
+        id: 'hack2',
+        name: 'AI Innovate',
+        date: '2024-04-05',
+        participants: '300+',
+        mode: 'Online',
+        registrationUrl: 'https://unstop.com/hackathons/ai-innovate-2024'
       }
     ]));
   }
@@ -341,6 +363,40 @@ export const ApiService = {
       }
       
       throw new Error('Certification not found');
+    }
+  },
+
+  // Hackathons API
+  hackathons: {
+    getAll: async (): Promise<Hackathon[]> => {
+      return JSON.parse(localStorage.getItem('hackathons') || '[]');
+    },
+    
+    add: async (hackathon: Omit<Hackathon, 'id'>): Promise<Hackathon> => {
+      const hackathons = JSON.parse(localStorage.getItem('hackathons') || '[]') as Hackathon[];
+      const newId = `hack${Math.floor(Math.random() * 10000)}`;
+      
+      const newHackathon: Hackathon = {
+        id: newId,
+        ...hackathon
+      };
+      
+      hackathons.push(newHackathon);
+      localStorage.setItem('hackathons', JSON.stringify(hackathons));
+      return newHackathon;
+    },
+    
+    update: async (hackathon: Hackathon): Promise<Hackathon> => {
+      const hackathons = JSON.parse(localStorage.getItem('hackathons') || '[]') as Hackathon[];
+      const updatedHackathons = hackathons.map(h => h.id === hackathon.id ? hackathon : h);
+      localStorage.setItem('hackathons', JSON.stringify(updatedHackathons));
+      return hackathon;
+    },
+    
+    delete: async (id: string): Promise<void> => {
+      const hackathons = JSON.parse(localStorage.getItem('hackathons') || '[]') as Hackathon[];
+      const filteredHackathons = hackathons.filter(h => h.id !== id);
+      localStorage.setItem('hackathons', JSON.stringify(filteredHackathons));
     }
   },
   

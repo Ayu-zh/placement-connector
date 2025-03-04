@@ -40,3 +40,13 @@ export interface Certification {
   duration: string;
   isActive: boolean;
 }
+
+// Hackathon interface
+export interface Hackathon {
+  id: string;
+  name: string;
+  date: string;
+  participants: string;
+  mode: 'Online' | 'Offline' | 'Hybrid';
+  registrationUrl: string;
+}

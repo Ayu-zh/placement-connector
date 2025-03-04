@@ -1,15 +1,15 @@
-
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from '@/components/ui/button';
 import { Navigate } from 'react-router-dom';
-import { User, Users, Building, Briefcase, BarChart3, AlertCircle, Award } from 'lucide-react';
+import { User, Users, Building, Briefcase, BarChart3, AlertCircle, Award, Code } from 'lucide-react';
 import { AdminJobManagement } from '@/components/admin/AdminJobManagement';
 import { AdminStudentManagement } from '@/components/admin/AdminStudentManagement';
 import { AdminStatistics } from '@/components/admin/AdminStatistics';
 import { AdminCertificationManagement } from '@/components/admin/AdminCertificationManagement';
+import AdminHackathonManagement from '@/components/admin/AdminHackathonManagement';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -30,15 +30,16 @@ const AdminDashboard = () => {
       </div>
 
       <Tabs defaultValue="overview" onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-5 w-full max-w-4xl">
+        <TabsList className="grid grid-cols-6 w-full max-w-5xl">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="jobs">Jobs</TabsTrigger>
           <TabsTrigger value="students">Students</TabsTrigger>
           <TabsTrigger value="certifications">Certifications</TabsTrigger>
+          <TabsTrigger value="hackathons">Hackathons</TabsTrigger>
           <TabsTrigger value="statistics">Statistics</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="overview" className="space-y-4">
+        <TabsContent value="overview">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -131,6 +132,10 @@ const AdminDashboard = () => {
         
         <TabsContent value="certifications">
           <AdminCertificationManagement />
+        </TabsContent>
+        
+        <TabsContent value="hackathons">
+          <AdminHackathonManagement />
         </TabsContent>
         
         <TabsContent value="statistics">

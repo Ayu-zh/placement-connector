@@ -1,4 +1,6 @@
+
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -8,19 +10,37 @@ import {
 } from '@/components/ui/card';
 import {
   Briefcase,
-  Trophy,
   GraduationCap,
   Calendar,
   Code,
   FileText,
   Building,
-  Users,
+  ExternalLink,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { ApiService } from '@/services/api';
+import { Hackathon } from '@/types/backend';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [hackathons, setHackathons] = useState<Hackathon[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadHackathons = async () => {
+      try {
+        const data = await ApiService.hackathons.getAll();
+        setHackathons(data);
+      } catch (error) {
+        console.error('Failed to load hackathons:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadHackathons();
+  }, []);
 
   const stats = [
     {
@@ -175,32 +195,42 @@ const Dashboard = () => {
               <CardTitle className="text-xl">Upcoming Hackathons</CardTitle>
               <CardDescription>Opportunities to showcase your skills</CardDescription>
             </div>
-            <Button variant="outline" size="sm">
-              Register Now
-            </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {upcomingHackathons.map((hackathon, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between border-b last:border-0 pb-4 last:pb-0"
-              >
-                <div className="flex items-center gap-4">
-                  <Code className="h-8 w-8 text-muted-foreground" />
-                  <div>
-                    <h3 className="font-semibold">{hackathon.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {hackathon.mode} • {hackathon.participants} participants
-                    </p>
+            {loading ? (
+              <div className="text-center py-2">Loading hackathons...</div>
+            ) : hackathons.length === 0 ? (
+              <div className="text-center py-2 text-muted-foreground">No upcoming hackathons available.</div>
+            ) : (
+              hackathons.map((hackathon, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between border-b last:border-0 pb-4 last:pb-0"
+                >
+                  <div className="flex items-center gap-4">
+                    <Code className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                      <h3 className="font-semibold">{hackathon.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {hackathon.mode} • {hackathon.participants} participants
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-sm text-muted-foreground">
+                      Date: {hackathon.date}
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href={hackathon.registrationUrl} target="_blank" rel="noopener noreferrer" className="flex items-center">
+                        Register Now <ExternalLink className="ml-1 h-3 w-3" />
+                      </a>
+                    </Button>
                   </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Date: {hackathon.date}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
