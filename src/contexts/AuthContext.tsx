@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User, AdminCredentials } from '@/types/auth';
 import { ApiService } from '@/services/api';
 
@@ -13,8 +13,33 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Key for storing user data in localStorage
+const AUTH_STORAGE_KEY = 'placement_portal_auth';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  
+  // Load user from localStorage on initial render
+  useEffect(() => {
+    const storedUser = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Failed to parse stored user data:', error);
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      }
+    }
+  }, []);
+
+  // Update localStorage whenever user state changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+    }
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     // Use API service for student login
