@@ -4,20 +4,36 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    
     try {
       await login(email, password);
       navigate('/dashboard');
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
     } catch (error) {
       console.error('Login failed:', error);
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,6 +66,7 @@ const Index = () => {
                 required
                 className="mt-1"
                 placeholder="you@example.com"
+                disabled={isLoading}
               />
             </div>
 
@@ -67,12 +84,13 @@ const Index = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="mt-1"
+                disabled={isLoading}
               />
             </div>
           </div>
 
-          <Button type="submit" className="w-full">
-            Sign in
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>
 
@@ -81,9 +99,14 @@ const Index = () => {
             variant="link" 
             onClick={() => navigate('/admin')}
             className="text-sm"
+            disabled={isLoading}
           >
             Admin Login
           </Button>
+        </div>
+        
+        <div className="mt-4 text-center text-xs text-zinc-500">
+          <p>Try these credentials: rahul.s@college.edu / password123</p>
         </div>
       </div>
     </div>

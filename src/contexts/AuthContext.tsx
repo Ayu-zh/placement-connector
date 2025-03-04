@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { User, UserRole, AdminCredentials } from '@/types/auth';
+import { User, AdminCredentials } from '@/types/auth';
+import { ApiService } from '@/services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -11,41 +12,29 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock admin credentials
-const ADMIN_CREDENTIALS: AdminCredentials = {
-  email: 'admin@college.edu',
-  password: 'admin123'
-};
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
 
   const login = async (email: string, password: string) => {
-    // Mock login - replace with real authentication
-    const mockUser: User = {
-      id: '1',
-      name: 'John Doe',
-      email: email,
-      role: 'student',
-      department: 'Computer Science',
-      isVerified: true,
-    };
-    setUser(mockUser);
+    // Use API service for student login
+    const user = await ApiService.studentLogin(email, password);
+    
+    if (user) {
+      setUser(user);
+    } else {
+      throw new Error('Invalid credentials');
+    }
   };
 
   const adminLogin = async (email: string, password: string): Promise<boolean> => {
-    // Check against mock admin credentials
-    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
-      const adminUser: User = {
-        id: 'admin-1',
-        name: 'Admin User',
-        email: email,
-        role: 'admin',
-        isVerified: true,
-      };
+    // Use API service for admin login
+    const adminUser = await ApiService.adminLogin({ email, password });
+    
+    if (adminUser) {
       setUser(adminUser);
       return true;
     }
+    
     return false;
   };
 

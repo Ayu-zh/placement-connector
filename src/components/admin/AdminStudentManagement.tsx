@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,72 +9,39 @@ import { User, Edit, Trash2, Search, Plus, Check, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-
-interface Student {
-  id: string;
-  name: string;
-  email: string;
-  department: string;
-  year: string;
-  status: 'active' | 'inactive' | 'suspended';
-  verified: boolean;
-}
-
-// Mock student data
-const initialStudents: Student[] = [
-  {
-    id: 's1',
-    name: 'Rahul Sharma',
-    email: 'rahul.s@college.edu',
-    department: 'Computer Science',
-    year: '4th Year',
-    status: 'active',
-    verified: true,
-  },
-  {
-    id: 's2',
-    name: 'Priya Patel',
-    email: 'priya.p@college.edu',
-    department: 'Electronics',
-    year: '3rd Year',
-    status: 'active',
-    verified: true,
-  },
-  {
-    id: 's3',
-    name: 'Ajay Kumar',
-    email: 'ajay.k@college.edu',
-    department: 'Mechanical',
-    year: '4th Year',
-    status: 'inactive',
-    verified: false,
-  },
-  {
-    id: 's4',
-    name: 'Neha Gupta',
-    email: 'neha.g@college.edu',
-    department: 'Civil',
-    year: '2nd Year',
-    status: 'active',
-    verified: true,
-  },
-  {
-    id: 's5',
-    name: 'Vikram Singh',
-    email: 'vikram.s@college.edu',
-    department: 'Computer Science',
-    year: '4th Year',
-    status: 'suspended',
-    verified: true,
-  },
-];
+import { ApiService } from '@/services/api';
+import { Student } from '@/types/backend';
 
 export function AdminStudentManagement() {
-  const [students, setStudents] = useState<Student[]>(initialStudents);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentStudent, setCurrentStudent] = useState<Student | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [tempStudent, setTempStudent] = useState<Partial<Student>>({});
+  const [password, setPassword] = useState('');
+
+  // Load students from API
+  useEffect(() => {
+    const loadStudents = async () => {
+      try {
+        setIsLoading(true);
+        const data = await ApiService.students.getAll();
+        setStudents(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load students",
+          variant: "destructive",
+        });
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadStudents();
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -89,35 +56,55 @@ export function AdminStudentManagement() {
   const handleAddNewStudent = () => {
     setCurrentStudent(null);
     setTempStudent({});
+    setPassword('');
     setEditDialogOpen(true);
   };
 
   const handleEditStudent = (student: Student) => {
     setCurrentStudent(student);
     setTempStudent({ ...student });
+    setPassword('');
     setEditDialogOpen(true);
   };
 
-  const handleDeleteStudent = (id: string) => {
-    setStudents(students.filter(student => student.id !== id));
-    toast({
-      title: "Student Removed",
-      description: "The student has been successfully removed from the system.",
-    });
+  const handleDeleteStudent = async (id: string) => {
+    try {
+      await ApiService.students.delete(id);
+      setStudents(students.filter(student => student.id !== id));
+      toast({
+        title: "Student Removed",
+        description: "The student has been successfully removed from the system.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete student",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
   };
 
-  const handleToggleVerification = (student: Student) => {
-    setStudents(students.map(s => 
-      s.id === student.id ? { ...s, verified: !s.verified } : s
-    ));
-    
-    toast({
-      title: student.verified ? "Verification Removed" : "Student Verified",
-      description: `${student.name} is now ${student.verified ? 'unverified' : 'verified'}.`,
-    });
+  const handleToggleVerification = async (student: Student) => {
+    try {
+      const updatedStudent = await ApiService.students.toggleVerification(student.id);
+      setStudents(students.map(s => s.id === student.id ? updatedStudent : s));
+      
+      toast({
+        title: student.verified ? "Verification Removed" : "Student Verified",
+        description: `${student.name} is now ${student.verified ? 'unverified' : 'verified'}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update verification status",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
   };
 
-  const handleSaveStudent = () => {
+  const handleSaveStudent = async () => {
     if (!tempStudent.name || !tempStudent.email || !tempStudent.department) {
       toast({
         title: "Error",
@@ -127,34 +114,56 @@ export function AdminStudentManagement() {
       return;
     }
 
-    if (currentStudent) {
-      // Edit existing student
-      setStudents(students.map(student => 
-        student.id === currentStudent.id ? { ...student, ...tempStudent as Student } : student
-      ));
+    try {
+      if (currentStudent) {
+        // Edit existing student
+        const updatedStudent = await ApiService.students.update(
+          { ...currentStudent, ...tempStudent as Student },
+          password || undefined // Only update password if provided
+        );
+        setStudents(students.map(student => student.id === currentStudent.id ? updatedStudent : student));
+        toast({
+          title: "Student Updated",
+          description: "The student information has been successfully updated.",
+        });
+      } else {
+        // Add new student
+        if (!password) {
+          toast({
+            title: "Error",
+            description: "Password is required for new students.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        const newStudent = await ApiService.students.add(
+          {
+            name: tempStudent.name || '',
+            email: tempStudent.email || '',
+            department: tempStudent.department || '',
+            year: tempStudent.year || '1st Year',
+            status: tempStudent.status as 'active' || 'active',
+            verified: tempStudent.verified || false,
+          },
+          password
+        );
+        setStudents([...students, newStudent]);
+        toast({
+          title: "Student Added",
+          description: "The new student has been successfully added to the system.",
+        });
+      }
+      
+      setEditDialogOpen(false);
+    } catch (error) {
       toast({
-        title: "Student Updated",
-        description: "The student information has been successfully updated.",
+        title: "Error",
+        description: "Failed to save student",
+        variant: "destructive",
       });
-    } else {
-      // Add new student
-      const newStudent: Student = {
-        id: `s${Math.floor(Math.random() * 10000)}`,
-        name: tempStudent.name || '',
-        email: tempStudent.email || '',
-        department: tempStudent.department || '',
-        year: tempStudent.year || '1st Year',
-        status: tempStudent.status || 'active',
-        verified: tempStudent.verified || false,
-      };
-      setStudents([...students, newStudent]);
-      toast({
-        title: "Student Added",
-        description: "The new student has been successfully added to the system.",
-      });
+      console.error(error);
     }
-    
-    setEditDialogOpen(false);
   };
 
   return (
@@ -179,81 +188,85 @@ export function AdminStudentManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Verified</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStudents.length > 0 ? (
-                filteredStudents.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="font-medium">{student.name}</TableCell>
-                    <TableCell>{student.email}</TableCell>
-                    <TableCell>{student.department}</TableCell>
-                    <TableCell>{student.year}</TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        student.status === 'active' ? 'default' : 
-                        student.status === 'inactive' ? 'secondary' : 
-                        'destructive'
-                      }>
-                        {student.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {student.verified ? (
-                        <Check className="h-5 w-5 text-green-500" />
-                      ) : (
-                        <X className="h-5 w-5 text-red-500" />
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleToggleVerification(student)}
-                        title={student.verified ? "Remove verification" : "Verify student"}
-                      >
+          {isLoading ? (
+            <div className="text-center py-4">Loading students...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Year</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Verified</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStudents.length > 0 ? (
+                  filteredStudents.map((student) => (
+                    <TableRow key={student.id}>
+                      <TableCell className="font-medium">{student.name}</TableCell>
+                      <TableCell>{student.email}</TableCell>
+                      <TableCell>{student.department}</TableCell>
+                      <TableCell>{student.year}</TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          student.status === 'active' ? 'default' : 
+                          student.status === 'inactive' ? 'secondary' : 
+                          'destructive'
+                        }>
+                          {student.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         {student.verified ? (
-                          <X className="h-4 w-4" />
+                          <Check className="h-5 w-5 text-green-500" />
                         ) : (
-                          <Check className="h-4 w-4" />
+                          <X className="h-5 w-5 text-red-500" />
                         )}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditStudent(student)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteStudent(student.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleVerification(student)}
+                          title={student.verified ? "Remove verification" : "Verify student"}
+                        >
+                          {student.verified ? (
+                            <X className="h-4 w-4" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditStudent(student)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteStudent(student.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-4">
+                      No students found. Try a different search term or add a new student.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-4">
-                    No students found. Try a different search term or add a new student.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -364,6 +377,20 @@ export function AdminStudentManagement() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium leading-none">
+                {currentStudent ? 'Password (leave blank to keep current)' : 'Password'}
+              </label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={currentStudent ? '••••••••' : 'Create password'}
+                required={!currentStudent}
+              />
             </div>
           </div>
           <DialogFooter>

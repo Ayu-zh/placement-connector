@@ -1,70 +1,44 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
-
-interface Job {
-  id: number;
-  title: string;
-  company: string;
-  location: string;
-  type: string;
-  salary: string;
-  deadline: string;
-}
-
-// Mock job data
-const initialJobs: Job[] = [
-  {
-    id: 1,
-    title: "Software Engineer",
-    company: "TechCorp",
-    location: "Bangalore, India",
-    type: "Full-time",
-    salary: "₹12-15 LPA",
-    deadline: "2024-03-25",
-  },
-  {
-    id: 2,
-    title: "Data Analyst",
-    company: "DataSys Inc",
-    location: "Hyderabad, India",
-    type: "Internship",
-    salary: "₹40,000/month",
-    deadline: "2024-03-28",
-  },
-  {
-    id: 3,
-    title: "Frontend Developer",
-    company: "WebTech Solutions",
-    location: "Mumbai, India",
-    type: "Full-time",
-    salary: "₹10-12 LPA",
-    deadline: "2024-04-10",
-  },
-  {
-    id: 4,
-    title: "Product Manager",
-    company: "Innovation Labs",
-    location: "Pune, India",
-    type: "Full-time",
-    salary: "₹18-22 LPA",
-    deadline: "2024-04-15",
-  },
-];
+import { ApiService } from '@/services/api';
+import { Job } from '@/types/backend';
+import { Textarea } from '@/components/ui/textarea';
 
 export function AdminJobManagement() {
-  const [jobs, setJobs] = useState<Job[]>(initialJobs);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentJob, setCurrentJob] = useState<Job | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [tempJob, setTempJob] = useState<Partial<Job>>({});
+
+  // Load jobs from API
+  useEffect(() => {
+    const loadJobs = async () => {
+      try {
+        setIsLoading(true);
+        const data = await ApiService.jobs.getAll();
+        setJobs(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load jobs",
+          variant: "destructive",
+        });
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadJobs();
+  }, []);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -87,15 +61,25 @@ export function AdminJobManagement() {
     setEditDialogOpen(true);
   };
 
-  const handleDeleteJob = (id: number) => {
-    setJobs(jobs.filter(job => job.id !== id));
-    toast({
-      title: "Job Deleted",
-      description: "The job has been successfully removed.",
-    });
+  const handleDeleteJob = async (id: number) => {
+    try {
+      await ApiService.jobs.delete(id);
+      setJobs(jobs.filter(job => job.id !== id));
+      toast({
+        title: "Job Deleted",
+        description: "The job has been successfully removed.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete job",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
   };
 
-  const handleSaveJob = () => {
+  const handleSaveJob = async () => {
     if (!tempJob.title || !tempJob.company) {
       toast({
         title: "Error",
@@ -105,32 +89,34 @@ export function AdminJobManagement() {
       return;
     }
 
-    if (currentJob) {
-      // Edit existing job
-      setJobs(jobs.map(job => job.id === currentJob.id ? { ...job, ...tempJob as Job } : job));
+    try {
+      if (currentJob) {
+        // Edit existing job
+        const updatedJob = await ApiService.jobs.update({ ...currentJob, ...tempJob as Job });
+        setJobs(jobs.map(job => job.id === currentJob.id ? updatedJob : job));
+        toast({
+          title: "Job Updated",
+          description: "The job has been successfully updated.",
+        });
+      } else {
+        // Add new job
+        const newJob = await ApiService.jobs.add(tempJob as Omit<Job, 'id'>);
+        setJobs([...jobs, newJob]);
+        toast({
+          title: "Job Added",
+          description: "The new job has been successfully added.",
+        });
+      }
+      
+      setEditDialogOpen(false);
+    } catch (error) {
       toast({
-        title: "Job Updated",
-        description: "The job has been successfully updated.",
+        title: "Error",
+        description: "Failed to save job",
+        variant: "destructive",
       });
-    } else {
-      // Add new job
-      const newJob: Job = {
-        id: Math.max(0, ...jobs.map(j => j.id)) + 1,
-        title: tempJob.title || '',
-        company: tempJob.company || '',
-        location: tempJob.location || '',
-        type: tempJob.type || 'Full-time',
-        salary: tempJob.salary || '',
-        deadline: tempJob.deadline || '',
-      };
-      setJobs([...jobs, newJob]);
-      toast({
-        title: "Job Added",
-        description: "The new job has been successfully added.",
-      });
+      console.error(error);
     }
-    
-    setEditDialogOpen(false);
   };
 
   return (
@@ -155,53 +141,57 @@ export function AdminJobManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Company</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Salary</TableHead>
-                <TableHead>Deadline</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredJobs.length > 0 ? (
-                filteredJobs.map((job) => (
-                  <TableRow key={job.id}>
-                    <TableCell className="font-medium">{job.title}</TableCell>
-                    <TableCell>{job.company}</TableCell>
-                    <TableCell>{job.type}</TableCell>
-                    <TableCell>{job.salary}</TableCell>
-                    <TableCell>{job.deadline}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEditJob(job)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteJob(job.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+          {isLoading ? (
+            <div className="text-center py-4">Loading jobs...</div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Salary</TableHead>
+                  <TableHead>Deadline</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredJobs.length > 0 ? (
+                  filteredJobs.map((job) => (
+                    <TableRow key={job.id}>
+                      <TableCell className="font-medium">{job.title}</TableCell>
+                      <TableCell>{job.company}</TableCell>
+                      <TableCell>{job.type}</TableCell>
+                      <TableCell>{job.salary}</TableCell>
+                      <TableCell>{job.deadline}</TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditJob(job)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteJob(job.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-4">
+                      No jobs found. Try a different search term or add a new job.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
-                    No jobs found. Try a different search term or add a new job.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
