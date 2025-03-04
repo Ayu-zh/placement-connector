@@ -50,3 +50,19 @@ export interface Hackathon {
   mode: 'Online' | 'Offline' | 'Hybrid';
   registrationUrl: string;
 }
+
+// Hackathon Teammate Request interface
+export interface TeammateRequest {
+  id: string;
+  hackathonName: string;
+  skills: string[];
+  description: string;
+  contactInfo: string;
+  postedBy: {
+    id: string;
+    name: string;
+    department: string;
+    year: string;
+  };
+  createdAt: string;
+}
