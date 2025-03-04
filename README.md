@@ -1,4 +1,4 @@
-# Welcome to your Lovable project
+# Placement Connector
 
 ## Project info
 
