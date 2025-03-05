@@ -66,6 +66,43 @@ export const HackathonTeammates = () => {
     }
   });
 
+  // Create mutation for connection requests
+  const connectWithTeammate = useMutation({
+    mutationFn: (request: TeammateRequest) => {
+      if (!user) throw new Error("You must be logged in to connect");
+      
+      // Create a notification for the request creator
+      return ApiService.notifications.add({
+        userId: request.postedBy.id,
+        type: 'connection_request',
+        title: "New Connection Request",
+        message: `${user.name} wants to connect with you for ${request.hackathonName}`,
+        relatedTo: {
+          type: 'hackathon',
+          id: request.id,
+          name: request.hackathonName
+        },
+        from: {
+          id: user.id,
+          name: user.name
+        }
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Connection Request Sent",
+        description: "Your request to connect has been sent successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error Sending Request",
+        description: error instanceof Error ? error.message : "There was an error sending your request.",
+        variant: "destructive"
+      });
+    }
+  });
+
   const filteredRequests = searchQuery 
     ? teammateRequests.filter(request => 
         request.hackathonName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -115,11 +152,26 @@ export const HackathonTeammates = () => {
   };
 
   const handleConnect = (request: TeammateRequest) => {
-    // In a real implementation, this would handle the connection logic
-    toast({
-      title: "Connection Request Sent",
-      description: `Your request to connect with ${request.postedBy.name} has been sent.`,
-    });
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to connect with teammates.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (user.id === request.postedBy.id) {
+      toast({
+        title: "Cannot Connect",
+        description: "You cannot connect with your own request.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Send connection request
+    connectWithTeammate.mutate(request);
   };
 
   return (
@@ -173,6 +225,7 @@ export const HackathonTeammates = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => handleConnect(request)}
+                        disabled={connectWithTeammate.isPending || request.postedBy.id === user?.id}
                         className="flex items-center gap-1"
                       >
                         <MessageSquare className="h-4 w-4" /> Connect
