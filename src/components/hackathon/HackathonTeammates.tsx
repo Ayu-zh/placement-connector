@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, Search, Plus, MessageSquare } from "lucide-react";
+import { Users, Search, Plus, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ApiService } from '@/services/api';
 import { TeammateRequest } from '@/types/backend';
@@ -23,7 +23,8 @@ export const HackathonTeammates = () => {
     hackathonName: '',
     skills: '',
     description: '',
-    contactInfo: ''
+    contactInfo: '',
+    linkedinUrl: '' // Add LinkedIn URL field
   });
 
   // Fetch teammate requests
@@ -47,7 +48,8 @@ export const HackathonTeammates = () => {
         hackathonName: '',
         skills: '',
         description: '',
-        contactInfo: ''
+        contactInfo: '',
+        linkedinUrl: ''
       });
       
       // Invalidate and refetch
@@ -102,6 +104,7 @@ export const HackathonTeammates = () => {
       skills: skillsArray,
       description: formData.description,
       contactInfo: formData.contactInfo,
+      linkedinUrl: formData.linkedinUrl,
       postedBy: {
         id: user.id,
         name: user.name,
@@ -115,11 +118,21 @@ export const HackathonTeammates = () => {
   };
 
   const handleConnect = (request: TeammateRequest) => {
-    // In a real implementation, this would handle the connection logic
-    toast({
-      title: "Connection Request Sent",
-      description: `Your request to connect with ${request.postedBy.name} has been sent.`,
-    });
+    // Redirect to the LinkedIn profile if available
+    if (request.linkedinUrl) {
+      window.open(request.linkedinUrl, '_blank');
+      
+      toast({
+        title: "Opening LinkedIn Profile",
+        description: `Redirecting to ${request.postedBy.name}'s LinkedIn profile.`,
+      });
+    } else {
+      toast({
+        title: "LinkedIn Not Available",
+        description: `${request.postedBy.name} has not provided a LinkedIn profile.`,
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -175,7 +188,7 @@ export const HackathonTeammates = () => {
                         onClick={() => handleConnect(request)}
                         className="flex items-center gap-1"
                       >
-                        <MessageSquare className="h-4 w-4" /> Connect
+                        <ExternalLink className="h-4 w-4" /> Connect via LinkedIn
                       </Button>
                     </div>
                     
@@ -251,6 +264,17 @@ export const HackathonTeammates = () => {
                   value={formData.contactInfo}
                   onChange={handleInputChange}
                   required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="linkedinUrl" className="text-sm font-medium">LinkedIn Profile URL</label>
+                <Input
+                  id="linkedinUrl"
+                  name="linkedinUrl"
+                  placeholder="e.g., https://linkedin.com/in/yourusername"
+                  value={formData.linkedinUrl}
+                  onChange={handleInputChange}
                 />
               </div>
               

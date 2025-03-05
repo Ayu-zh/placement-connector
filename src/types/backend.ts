@@ -58,6 +58,7 @@ export interface TeammateRequest {
   skills: string[];
   description: string;
   contactInfo: string;
+  linkedinUrl?: string; // Added LinkedIn URL (optional)
   postedBy: {
     id: string;
     name: string;

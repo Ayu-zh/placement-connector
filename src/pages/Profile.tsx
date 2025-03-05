@@ -16,7 +16,8 @@ import {
   Edit,
   Save,
   FileDown,
-  X
+  X,
+  Linkedin
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -49,6 +50,7 @@ const Profile = () => {
 
   const [links, setLinks] = useState([
     { platform: "GitHub", url: "https://github.com/username", icon: Github },
+    { platform: "LinkedIn", url: "https://linkedin.com/in/username", icon: Linkedin },
     { platform: "LeetCode", url: "https://leetcode.com/username", icon: LinkIcon },
     { platform: "CodeChef", url: "https://codechef.com/username", icon: LinkIcon },
   ]);
