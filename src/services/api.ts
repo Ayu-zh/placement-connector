@@ -1,3 +1,4 @@
+
 import { Job, Student, StudentCredentials, Certification, Hackathon, TeammateRequest, DashboardStats } from '@/types/backend';
 import { User, AdminCredentials } from '@/types/auth';
 
@@ -221,28 +222,28 @@ const initializeDatabase = () => {
     const activities = [
       {
         id: 'act1',
-        type: 'job',
+        type: 'job' as const,
         title: 'New Job Posted',
         description: 'Google has posted a new Software Engineer position',
         date: '2024-03-25T09:45:00.000Z'
       },
       {
         id: 'act2',
-        type: 'company',
+        type: 'company' as const,
         title: 'New Company Registration',
         description: 'Microsoft has registered for campus placements',
         date: '2024-03-24T13:20:00.000Z'
       },
       {
         id: 'act3',
-        type: 'student',
+        type: 'student' as const,
         title: 'Student Verified',
         description: 'Neha Gupta has been verified',
         date: '2024-03-23T10:15:00.000Z'
       },
       {
         id: 'act4',
-        type: 'placement',
+        type: 'placement' as const,
         title: 'Placement Offer',
         description: 'Rahul Sharma received an offer from Amazon',
         date: '2024-03-22T16:30:00.000Z'
