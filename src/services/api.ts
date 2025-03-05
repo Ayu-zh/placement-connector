@@ -1,4 +1,4 @@
-import { Job, Student, StudentCredentials, Certification, Hackathon } from '@/types/backend';
+import { Job, Student, StudentCredentials, Certification, Hackathon, TeammateRequest, DashboardStats } from '@/types/backend';
 import { User, AdminCredentials } from '@/types/auth';
 
 // Mock database using localStorage
@@ -160,6 +160,107 @@ const initializeDatabase = () => {
         registrationUrl: 'https://unstop.com/hackathons/ai-innovate-2024'
       }
     ]));
+  }
+
+  // Initialize teammate requests if not already present
+  if (!localStorage.getItem('teammateRequests')) {
+    localStorage.setItem('teammateRequests', JSON.stringify([
+      {
+        id: 'req1',
+        hackathonName: 'CodeFest 2024',
+        skills: ['React', 'Node.js', 'UI/UX'],
+        description: 'Looking for a frontend developer with React experience for CodeFest 2024',
+        contactInfo: 'rahul.s@college.edu',
+        postedBy: {
+          id: 's1',
+          name: 'Rahul Sharma',
+          department: 'Computer Science',
+          year: '4th Year'
+        },
+        createdAt: '2024-03-20T08:30:00.000Z'
+      },
+      {
+        id: 'req2',
+        hackathonName: 'AI Innovate',
+        skills: ['Python', 'TensorFlow', 'NLP'],
+        description: 'Need a partner with ML experience for AI Innovate hackathon',
+        contactInfo: 'neha.g@college.edu',
+        postedBy: {
+          id: 's4',
+          name: 'Neha Gupta',
+          department: 'Civil',
+          year: '2nd Year'
+        },
+        createdAt: '2024-03-22T14:45:00.000Z'
+      }
+    ]));
+  }
+
+  // Initialize dashboard stats
+  if (!localStorage.getItem('dashboardStats')) {
+    const students = JSON.parse(localStorage.getItem('students') || '[]');
+    const jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
+    
+    // Create random department stats
+    const departments = ['Computer Science', 'Electronics', 'Mechanical', 'Civil'];
+    const departmentPlacements = departments.map(dept => ({
+      department: dept,
+      count: Math.floor(Math.random() * 40) + 10 // Random between 10-50
+    }));
+    
+    // Calculate active students count
+    const activeStudents = students.filter(s => s.status === 'active').length;
+    
+    // Random total placements
+    const totalPlacements = Math.floor(Math.random() * 100) + 50; // 50-150 placements
+    
+    // Calculate placement rate
+    const placementRate = Math.round((totalPlacements / students.length) * 100);
+    
+    // Generate random recent activities
+    const activities = [
+      {
+        id: 'act1',
+        type: 'job',
+        title: 'New Job Posted',
+        description: 'Google has posted a new Software Engineer position',
+        date: '2024-03-25T09:45:00.000Z'
+      },
+      {
+        id: 'act2',
+        type: 'company',
+        title: 'New Company Registration',
+        description: 'Microsoft has registered for campus placements',
+        date: '2024-03-24T13:20:00.000Z'
+      },
+      {
+        id: 'act3',
+        type: 'student',
+        title: 'Student Verified',
+        description: 'Neha Gupta has been verified',
+        date: '2024-03-23T10:15:00.000Z'
+      },
+      {
+        id: 'act4',
+        type: 'placement',
+        title: 'Placement Offer',
+        description: 'Rahul Sharma received an offer from Amazon',
+        date: '2024-03-22T16:30:00.000Z'
+      }
+    ];
+    
+    const stats: DashboardStats = {
+      totalStudents: students.length,
+      activeStudents,
+      registeredCompanies: 12, // Random number
+      activeJobs: jobs.length,
+      totalPlacements,
+      placementRate,
+      departmentPlacements,
+      recentActivities: activities
+    };
+    
+    localStorage.setItem('dashboardStats', JSON.stringify(stats));
   }
 };
 
@@ -405,5 +506,59 @@ export const ApiService = {
     const credentials = JSON.parse(localStorage.getItem('studentCredentials') || '[]') as StudentCredentials[];
     const credential = credentials.find(c => c.userId === userId && c.password === password);
     return !!credential;
+  },
+  
+  // Dashboard Stats API
+  dashboardStats: {
+    get: async (): Promise<DashboardStats> => {
+      return JSON.parse(localStorage.getItem('dashboardStats') || '{}');
+    },
+    
+    update: async (stats: Partial<DashboardStats>): Promise<DashboardStats> => {
+      const currentStats = JSON.parse(localStorage.getItem('dashboardStats') || '{}');
+      const updatedStats = { ...currentStats, ...stats };
+      localStorage.setItem('dashboardStats', JSON.stringify(updatedStats));
+      return updatedStats;
+    }
+  },
+  
+  // Teammate Requests API
+  teammateRequests: {
+    getAll: async (): Promise<TeammateRequest[]> => {
+      return JSON.parse(localStorage.getItem('teammateRequests') || '[]');
+    },
+    
+    getByHackathon: async (hackathonName: string): Promise<TeammateRequest[]> => {
+      const requests = JSON.parse(localStorage.getItem('teammateRequests') || '[]') as TeammateRequest[];
+      return requests.filter(req => req.hackathonName === hackathonName);
+    },
+    
+    add: async (request: Omit<TeammateRequest, 'id' | 'createdAt'>): Promise<TeammateRequest> => {
+      const requests = JSON.parse(localStorage.getItem('teammateRequests') || '[]') as TeammateRequest[];
+      const newId = `req${Math.floor(Math.random() * 10000)}`;
+      
+      const newRequest: TeammateRequest = {
+        id: newId,
+        ...request,
+        createdAt: new Date().toISOString()
+      };
+      
+      requests.push(newRequest);
+      localStorage.setItem('teammateRequests', JSON.stringify(requests));
+      return newRequest;
+    },
+    
+    update: async (request: TeammateRequest): Promise<TeammateRequest> => {
+      const requests = JSON.parse(localStorage.getItem('teammateRequests') || '[]') as TeammateRequest[];
+      const updatedRequests = requests.map(r => r.id === request.id ? request : r);
+      localStorage.setItem('teammateRequests', JSON.stringify(updatedRequests));
+      return request;
+    },
+    
+    delete: async (id: string): Promise<void> => {
+      const requests = JSON.parse(localStorage.getItem('teammateRequests') || '[]') as TeammateRequest[];
+      const filteredRequests = requests.filter(r => r.id !== id);
+      localStorage.setItem('teammateRequests', JSON.stringify(filteredRequests));
+    }
   }
 };

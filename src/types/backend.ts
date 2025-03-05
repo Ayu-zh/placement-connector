@@ -66,3 +66,24 @@ export interface TeammateRequest {
   };
   createdAt: string;
 }
+
+// Dashboard Statistics
+export interface DashboardStats {
+  totalStudents: number;
+  activeStudents: number;
+  registeredCompanies: number;
+  activeJobs: number;
+  totalPlacements: number;
+  placementRate: number;
+  departmentPlacements: {
+    department: string;
+    count: number;
+  }[];
+  recentActivities: {
+    id: string;
+    type: 'job' | 'company' | 'student' | 'placement';
+    title: string;
+    description: string;
+    date: string;
+  }[];
+}

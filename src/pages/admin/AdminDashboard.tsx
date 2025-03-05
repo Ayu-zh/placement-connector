@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,15 +11,42 @@ import { AdminStudentManagement } from '@/components/admin/AdminStudentManagemen
 import { AdminStatistics } from '@/components/admin/AdminStatistics';
 import { AdminCertificationManagement } from '@/components/admin/AdminCertificationManagement';
 import AdminHackathonManagement from '@/components/admin/AdminHackathonManagement';
+import { DashboardStats } from '@/types/backend';
+import { ApiService } from '@/services/api';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Redirect to login if not admin
   if (!user || user.role !== 'admin') {
     return <Navigate to="/admin" replace />;
   }
+
+  useEffect(() => {
+    const loadStats = async () => {
+      try {
+        setIsLoading(true);
+        const dashboardStats = await ApiService.dashboardStats.get();
+        setStats(dashboardStats);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load dashboard statistics",
+          variant: "destructive",
+        });
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadStats();
+  }, [toast]);
 
   return (
     <div className="space-y-6">
@@ -40,86 +68,84 @@ const AdminDashboard = () => {
         </TabsList>
         
         <TabsContent value="overview">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">1,245</div>
-                <p className="text-xs text-muted-foreground">
-                  +10% from last month
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Registered Companies</CardTitle>
-                <Building className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">24</div>
-                <p className="text-xs text-muted-foreground">
-                  +2 new since last week
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Job Postings</CardTitle>
-                <Briefcase className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">45</div>
-                <p className="text-xs text-muted-foreground">
-                  +12 new since last month
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Alerts</CardTitle>
-              <CardDescription>
-                Latest notifications requiring your attention
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 rounded-md border p-4">
-                  <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium">New Company Registration</p>
-                    <p className="text-sm text-muted-foreground">
-                      Microsoft has requested to register for campus placements
+          {isLoading ? (
+            <div className="text-center py-8">Loading dashboard statistics...</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.totalStudents || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats?.activeStudents || 0} active students
                     </p>
-                    <div className="mt-2">
-                      <Button size="sm" variant="outline" className="mr-2">Review</Button>
-                      <Button size="sm">Approve</Button>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
                 
-                <div className="flex items-start gap-4 rounded-md border p-4">
-                  <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Placement Deadline Approaching</p>
-                    <p className="text-sm text-muted-foreground">
-                      Google on-site interview deadline is tomorrow
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Registered Companies</CardTitle>
+                    <Building className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.registeredCompanies || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Participating in campus placements
                     </p>
-                    <div className="mt-2">
-                      <Button size="sm" variant="outline" className="mr-2">Send Reminder</Button>
-                      <Button size="sm">View Details</Button>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Active Job Postings</CardTitle>
+                    <Briefcase className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{stats?.activeJobs || 0}</div>
+                    <p className="text-xs text-muted-foreground">
+                      Open for applications
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
-            </CardContent>
-          </Card>
+              
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>Recent Alerts</CardTitle>
+                  <CardDescription>
+                    Latest notifications requiring your attention
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {stats?.recentActivities && stats.recentActivities.length > 0 ? (
+                      stats.recentActivities.map((activity) => (
+                        <div key={activity.id} className="flex items-start gap-4 rounded-md border p-4">
+                          <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                          <div>
+                            <p className="font-medium">{activity.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {activity.description}
+                            </p>
+                            <div className="mt-2">
+                              <Button size="sm" variant="outline" className="mr-2">Details</Button>
+                              <Button size="sm">Action</Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4">No recent activities</div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </TabsContent>
         
         <TabsContent value="jobs">
