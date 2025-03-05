@@ -1,29 +1,22 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Users, Search, Plus, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface TeammateRequest {
-  id: string;
-  hackathonName: string;
-  skills: string[];
-  description: string;
-  contactInfo: string;
-  postedBy: {
-    name: string;
-    department: string;
-    year: string;
-  };
-}
+import { ApiService } from '@/services/api';
+import { TeammateRequest } from '@/types/backend';
+import { useAuth } from '@/contexts/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const HackathonTeammates = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'find' | 'post'>('find');
   const [searchQuery, setSearchQuery] = useState('');
+  const queryClient = useQueryClient();
   
   // Form state for posting a new request
   const [formData, setFormData] = useState({
@@ -33,45 +26,45 @@ export const HackathonTeammates = () => {
     contactInfo: ''
   });
 
-  // Mock data for teammate requests
-  const teammateRequests: TeammateRequest[] = [
-    {
-      id: '1',
-      hackathonName: 'CodeFest 2024',
-      skills: ['React', 'Node.js', 'UI/UX'],
-      description: 'Looking for frontend and backend developers to build a social impact project.',
-      contactInfo: 'john.doe@example.com',
-      postedBy: {
-        name: 'John Doe',
-        department: 'Computer Science',
-        year: '3rd Year'
-      }
+  // Fetch teammate requests
+  const { data: teammateRequests = [], isLoading, error } = useQuery({
+    queryKey: ['teammateRequests'],
+    queryFn: ApiService.teammateRequests.getAll
+  });
+
+  // Create mutation for posting new requests
+  const createRequest = useMutation({
+    mutationFn: (requestData: Omit<TeammateRequest, 'id' | 'createdAt'>) => 
+      ApiService.teammateRequests.add(requestData),
+    onSuccess: () => {
+      toast({
+        title: "Request Posted Successfully",
+        description: "Your teammate request has been posted.",
+      });
+      
+      // Reset form
+      setFormData({
+        hackathonName: '',
+        skills: '',
+        description: '',
+        contactInfo: ''
+      });
+      
+      // Invalidate and refetch
+      queryClient.invalidateQueries({ queryKey: ['teammateRequests'] });
+      
+      // Switch to find tab
+      setActiveTab('find');
     },
-    {
-      id: '2',
-      hackathonName: 'AI Innovate',
-      skills: ['Python', 'Machine Learning', 'Data Analysis'],
-      description: 'Need team members with ML experience for healthcare AI solution.',
-      contactInfo: 'jane.smith@example.com',
-      postedBy: {
-        name: 'Jane Smith',
-        department: 'Data Science',
-        year: '4th Year'
-      }
-    },
-    {
-      id: '3',
-      hackathonName: 'Blockchain Summit',
-      skills: ['Solidity', 'Web3.js', 'Smart Contracts'],
-      description: 'Building a decentralized application for supply chain tracking.',
-      contactInfo: 'mike.crypto@example.com',
-      postedBy: {
-        name: 'Mike Johnson',
-        department: 'Information Technology',
-        year: '2nd Year'
-      }
+    onError: (error) => {
+      toast({
+        title: "Error Posting Request",
+        description: "There was an error posting your request. Please try again.",
+        variant: "destructive"
+      });
+      console.error("Error posting request:", error);
     }
-  ];
+  });
 
   const filteredRequests = searchQuery 
     ? teammateRequests.filter(request => 
@@ -87,21 +80,38 @@ export const HackathonTeammates = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real implementation, this would call an API to save the request
-    console.log('Submitting form:', formData);
     
-    toast({
-      title: "Request Posted Successfully",
-      description: "Your teammate request has been posted.",
-    });
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "You must be logged in to post a request.",
+        variant: "destructive"
+      });
+      return;
+    }
     
-    // Reset form
-    setFormData({
-      hackathonName: '',
-      skills: '',
-      description: '',
-      contactInfo: ''
-    });
+    // Format skills from comma-separated string to array
+    const skillsArray = formData.skills
+      .split(',')
+      .map(skill => skill.trim())
+      .filter(skill => skill !== '');
+    
+    // Create request object
+    const requestData = {
+      hackathonName: formData.hackathonName,
+      skills: skillsArray,
+      description: formData.description,
+      contactInfo: formData.contactInfo,
+      postedBy: {
+        id: user.id,
+        name: user.name,
+        department: user.department || 'Not specified',
+        year: 'Current' // This would ideally come from user profile
+      }
+    };
+    
+    // Submit request
+    createRequest.mutate(requestData);
   };
 
   const handleConnect = (request: TeammateRequest) => {
@@ -137,7 +147,15 @@ export const HackathonTeammates = () => {
             </div>
             
             <div className="space-y-4 mt-4">
-              {filteredRequests.length === 0 ? (
+              {isLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading teammate requests...
+                </div>
+              ) : error ? (
+                <div className="text-center py-8 text-red-500">
+                  Error loading requests. Please try again.
+                </div>
+              ) : filteredRequests.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No teammate requests match your search.
                 </div>
@@ -175,6 +193,10 @@ export const HackathonTeammates = () => {
                           </span>
                         ))}
                       </div>
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground">
+                      Contact: {request.contactInfo}
                     </div>
                   </div>
                 ))
@@ -232,8 +254,18 @@ export const HackathonTeammates = () => {
                 />
               </div>
               
-              <Button type="submit" className="w-full mt-4">
-                <Plus className="h-4 w-4 mr-2" /> Post Teammate Request
+              <Button 
+                type="submit" 
+                className="w-full mt-4" 
+                disabled={createRequest.isPending}
+              >
+                {createRequest.isPending ? (
+                  "Posting..."
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" /> Post Teammate Request
+                  </>
+                )}
               </Button>
             </form>
           </TabsContent>
