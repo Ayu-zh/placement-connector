@@ -1,4 +1,5 @@
-import { Job, Student, StudentCredentials, Certification, Hackathon, TeammateRequest, DashboardStats, Notification } from '@/types/backend';
+
+import { Job, Student, StudentCredentials, Certification, Hackathon, TeammateRequest, DashboardStats } from '@/types/backend';
 import { User, AdminCredentials } from '@/types/auth';
 
 // Mock database using localStorage
@@ -194,11 +195,6 @@ const initializeDatabase = () => {
         createdAt: '2024-03-22T14:45:00.000Z'
       }
     ]));
-  }
-
-  // Initialize notifications if not already present
-  if (!localStorage.getItem('notifications')) {
-    localStorage.setItem('notifications', JSON.stringify([]));
   }
 
   // Initialize dashboard stats
@@ -565,63 +561,5 @@ export const ApiService = {
       const filteredRequests = requests.filter(r => r.id !== id);
       localStorage.setItem('teammateRequests', JSON.stringify(filteredRequests));
     }
-  },
-
-  // Notifications API
-  notifications: {
-    getAll: async (): Promise<Notification[]> => {
-      return JSON.parse(localStorage.getItem('notifications') || '[]');
-    },
-    
-    getByUser: async (userId: string): Promise<Notification[]> => {
-      const notifications = JSON.parse(localStorage.getItem('notifications') || '[]') as Notification[];
-      return notifications.filter(n => n.userId === userId).sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-    },
-    
-    add: async (notification: Omit<Notification, 'id' | 'createdAt' | 'isRead'>): Promise<Notification> => {
-      const notifications = JSON.parse(localStorage.getItem('notifications') || '[]') as Notification[];
-      const newId = `notif${Math.floor(Math.random() * 10000)}`;
-      
-      const newNotification: Notification = {
-        id: newId,
-        ...notification,
-        isRead: false,
-        createdAt: new Date().toISOString()
-      };
-      
-      notifications.push(newNotification);
-      localStorage.setItem('notifications', JSON.stringify(notifications));
-      return newNotification;
-    },
-    
-    markAsRead: async (id: string): Promise<Notification> => {
-      const notifications = JSON.parse(localStorage.getItem('notifications') || '[]') as Notification[];
-      const notification = notifications.find(n => n.id === id);
-      
-      if (notification) {
-        notification.isRead = true;
-        const updatedNotifications = notifications.map(n => n.id === id ? notification : n);
-        localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
-        return notification;
-      }
-      
-      throw new Error('Notification not found');
-    },
-    
-    markAllAsRead: async (userId: string): Promise<void> => {
-      const notifications = JSON.parse(localStorage.getItem('notifications') || '[]') as Notification[];
-      const updatedNotifications = notifications.map(n => 
-        n.userId === userId ? { ...n, isRead: true } : n
-      );
-      localStorage.setItem('notifications', JSON.stringify(updatedNotifications));
-    },
-    
-    delete: async (id: string): Promise<void> => {
-      const notifications = JSON.parse(localStorage.getItem('notifications') || '[]') as Notification[];
-      const filteredNotifications = notifications.filter(n => n.id !== id);
-      localStorage.setItem('notifications', JSON.stringify(filteredNotifications));
-    }
-  },
+  }
 };

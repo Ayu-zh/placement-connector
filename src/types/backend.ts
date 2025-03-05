@@ -1,3 +1,4 @@
+
 import { User, UserRole } from './auth';
 
 // Student credentials
@@ -48,26 +49,6 @@ export interface Hackathon {
   participants: string;
   mode: 'Online' | 'Offline' | 'Hybrid';
   registrationUrl: string;
-}
-
-// Notification interface
-export interface Notification {
-  id: string;
-  userId: string; // ID of the user who should receive the notification
-  type: 'connection_request' | 'request_accepted' | 'system';
-  title: string;
-  message: string;
-  relatedTo?: {
-    type: 'hackathon' | 'job';
-    id: string;
-    name: string;
-  };
-  from?: {
-    id: string;
-    name: string;
-  };
-  isRead: boolean;
-  createdAt: string;
 }
 
 // Hackathon Teammate Request interface
