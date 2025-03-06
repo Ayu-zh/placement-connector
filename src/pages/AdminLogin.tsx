@@ -36,8 +36,11 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center bg-zinc-50 px-4">
-      <div className="w-full max-w-md space-y-8">
+    <div 
+      className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 bg-cover bg-center"
+      style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?auto=format&fit=crop&q=80")', }}
+    >
+      <div className="w-full max-w-md space-y-8 bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-xl">
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900">
             Admin Portal
