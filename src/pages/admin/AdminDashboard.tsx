@@ -124,17 +124,19 @@ const AdminDashboard = () => {
                   <div className="space-y-4">
                     {stats?.recentActivities && stats.recentActivities.length > 0 ? (
                       stats.recentActivities.map((activity) => (
-                        <div key={activity.id} className="flex items-start gap-4 rounded-md border p-4">
-                          <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-                          <div>
-                            <p className="font-medium">{activity.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {activity.description}
-                            </p>
-                            <div className="mt-2">
-                              <Button size="sm" variant="outline" className="mr-2">Details</Button>
-                              <Button size="sm">Action</Button>
+                        <div key={activity.id} className="flex items-center justify-between gap-4 rounded-md border p-4">
+                          <div className="flex items-start gap-4">
+                            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+                            <div>
+                              <p className="font-medium">{activity.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {activity.description}
+                              </p>
                             </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline">Details</Button>
+                            <Button size="sm">Action</Button>
                           </div>
                         </div>
                       ))
