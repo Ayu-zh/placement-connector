@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -20,6 +20,12 @@ interface NavItem {
 export function Sidebar() {
   const { user } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
+  
+  // Don't show sidebar on login pages
+  if (location.pathname === '/' || location.pathname === '/admin') {
+    return null;
+  }
 
   const studentNavItems: NavItem[] = [
     {

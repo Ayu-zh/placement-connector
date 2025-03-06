@@ -11,13 +11,16 @@ export function Layout({ children }: { children: ReactNode }) {
   
   // Check if the current path is an admin route
   const isAdminRoute = location.pathname.startsWith('/admin');
+  
+  // Check if we're on a login page
+  const isLoginPage = location.pathname === '/' || location.pathname === '/admin';
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <Navbar />
+      {!isLoginPage && <Navbar />}
       <div className="flex">
-        {user && !isAdminRoute && <Sidebar />}
-        <main className={`${isAdminRoute ? 'w-full' : 'flex-1'} p-6`}>{children}</main>
+        {user && !isAdminRoute && !isLoginPage && <Sidebar />}
+        <main className={`${isAdminRoute || isLoginPage ? 'w-full' : 'flex-1'} p-6`}>{children}</main>
       </div>
     </div>
   );
