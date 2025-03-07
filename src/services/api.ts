@@ -37,7 +37,7 @@ export const ApiService = {
   // Student login
   studentLogin: async (email: string, password: string): Promise<User | null> => {
     try {
-      await SupabaseApiService.login(email, password);
+      const success = await SupabaseApiService.login(email, password);
       // The actual user will be set in the AuthContext via the onAuthStateChange listener
       return null;
     } catch (error) {

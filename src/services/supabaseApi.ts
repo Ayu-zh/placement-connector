@@ -1,9 +1,18 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Job, Student, Certification, Hackathon, TeammateRequest, DashboardStats } from '@/types/backend';
 import { User } from '@/types/auth';
 
 export const SupabaseApiService = {
+  // Authentication
+  login: async (email: string, password: string): Promise<boolean> => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+    
+    return !error;
+  },
+
   // Dashboard statistics
   dashboardStats: {
     get: async (): Promise<DashboardStats> => {
@@ -58,7 +67,12 @@ export const SupabaseApiService = {
       ];
       
       return {
-        ...statsData,
+        totalStudents: statsData.total_students,
+        activeStudents: statsData.active_students,
+        registeredCompanies: statsData.registered_companies,
+        activeJobs: statsData.active_jobs,
+        totalPlacements: statsData.total_placements,
+        placementRate: statsData.placement_rate,
         departmentPlacements,
         recentActivities: activities
       };
