@@ -54,6 +54,7 @@ export const dashboardService = {
       }
     ];
     
+    // Map the database column names to our frontend type
     return {
       totalStudents: statsData.total_students,
       activeStudents: statsData.active_students,
