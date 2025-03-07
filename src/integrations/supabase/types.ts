@@ -9,16 +9,198 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      certifications: {
+        Row: {
+          created_at: string | null
+          description: string
+          duration: string
+          id: string
+          is_active: boolean | null
+          name: string
+          provider: string
+          skills_gained: string[]
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          duration: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          provider: string
+          skills_gained: string[]
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          duration?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          provider?: string
+          skills_gained?: string[]
+        }
+        Relationships: []
+      }
+      hackathons: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          mode: string
+          name: string
+          participants: string
+          registration_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          mode: string
+          name: string
+          participants: string
+          registration_url: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          mode?: string
+          name?: string
+          participants?: string
+          registration_url?: string
+        }
+        Relationships: []
+      }
+      jobs: {
+        Row: {
+          company: string
+          created_at: string | null
+          deadline: string
+          id: number
+          location: string
+          salary: string
+          title: string
+          type: string
+        }
+        Insert: {
+          company: string
+          created_at?: string | null
+          deadline: string
+          id?: number
+          location: string
+          salary: string
+          title: string
+          type: string
+        }
+        Update: {
+          company?: string
+          created_at?: string | null
+          deadline?: string
+          id?: number
+          location?: string
+          salary?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          id: string
+          name: string
+          role: Database["public"]["Enums"]["user_role"]
+          status: string | null
+          updated_at: string | null
+          verified: boolean | null
+          year: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          id: string
+          name: string
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          year?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          id?: string
+          name?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          status?: string | null
+          updated_at?: string | null
+          verified?: boolean | null
+          year?: string | null
+        }
+        Relationships: []
+      }
+      teammate_requests: {
+        Row: {
+          contact_info: string
+          created_at: string | null
+          description: string
+          hackathon_name: string
+          id: string
+          posted_by: string
+          skills: string[]
+        }
+        Insert: {
+          contact_info: string
+          created_at?: string | null
+          description: string
+          hackathon_name: string
+          id?: string
+          posted_by: string
+          skills: string[]
+        }
+        Update: {
+          contact_info?: string
+          created_at?: string | null
+          description?: string
+          hackathon_name?: string
+          id?: string
+          posted_by?: string
+          skills?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teammate_requests_posted_by_fkey"
+            columns: ["posted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      dashboard_stats: {
+        Row: {
+          active_jobs: number | null
+          active_students: number | null
+          placement_rate: number | null
+          registered_companies: number | null
+          total_placements: number | null
+          total_students: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "student" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
