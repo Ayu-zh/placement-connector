@@ -1,5 +1,5 @@
 
-import { SupabaseApiService } from './supabaseApi';
+import { SupabaseApiService } from './supabase';
 import { Job, Student, Certification, Hackathon, TeammateRequest, DashboardStats } from '@/types/backend';
 import { User, AdminCredentials } from '@/types/auth';
 
