@@ -3,6 +3,7 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { User, AdminCredentials } from '@/types/auth';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -16,56 +17,84 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const { toast } = useToast();
   
   // Initialize user from Supabase session on load
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        handleAuthChange(session);
-      }
-    );
-
-    // Also check for existing session on first load
+    // Check for existing session on first load
     const initializeAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      handleAuthChange(session);
+      await handleAuthChange(session);
     };
     
     initializeAuth();
+    
+    // Subscribe to auth changes for real-time synchronization across devices
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id);
+        
+        // Handle sign-in and user updates
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          await handleAuthChange(session);
+          
+          // Only show toast for sign-in events, not initial session check
+          if (event === 'SIGNED_IN') {
+            toast({
+              title: "Session Active",
+              description: "Your session is active on this device",
+            });
+          }
+        }
+        
+        // Handle sign-out
+        if (event === 'SIGNED_OUT') {
+          setUser(null);
+          toast({
+            title: "Signed Out",
+            description: "You have been signed out from all devices",
+          });
+        }
+      }
+    );
 
     // Cleanup the subscription
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [toast]);
 
   const handleAuthChange = async (session: Session | null) => {
     if (session?.user) {
-      // First, get the user role from profiles table
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
+      try {
+        // First, get the user role from profiles table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
 
-      if (profile) {
-        setUser({
-          id: session.user.id,
-          name: profile.name,
-          email: profile.email,
-          role: profile.role,
-          department: profile.department,
-          isVerified: profile.verified,
-        });
-      } else {
-        // If profile doesn't exist yet (race condition), set minimal user data
-        setUser({
-          id: session.user.id,
-          name: session.user.user_metadata.name || 'User',
-          email: session.user.email || '',
-          role: 'student',
-          isVerified: false,
-        });
+        if (profile) {
+          setUser({
+            id: session.user.id,
+            name: profile.name,
+            email: profile.email,
+            role: profile.role,
+            department: profile.department,
+            isVerified: profile.verified,
+          });
+        } else {
+          // If profile doesn't exist yet (race condition), set minimal user data
+          setUser({
+            id: session.user.id,
+            name: session.user.user_metadata.name || 'User',
+            email: session.user.email || '',
+            role: 'student',
+            isVerified: false,
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
       }
     } else {
       setUser(null);

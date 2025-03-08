@@ -12,6 +12,10 @@ export const authService = {
     return !error;
   },
   
+  logout: async (): Promise<void> => {
+    await supabase.auth.signOut();
+  },
+  
   // Password validation
   validatePassword: async (userId: string, password: string): Promise<boolean> => {
     // Get the user's email

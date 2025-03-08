@@ -12,6 +12,7 @@ import { teammateRequestsService } from './teammateRequests';
 export const SupabaseApiService = {
   // Authentication
   login: authService.login,
+  logout: authService.logout,
   validatePassword: authService.validatePassword,
   
   // Dashboard Stats
