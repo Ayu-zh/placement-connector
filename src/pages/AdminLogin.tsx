@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { defaultCredentials } from '@/integrations/supabase/client';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -72,6 +73,11 @@ const AdminLogin = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fillTestCredentials = () => {
+    setEmail(defaultCredentials.admin.email);
+    setPassword(defaultCredentials.admin.password);
   };
 
   return (
@@ -216,6 +222,18 @@ const AdminLogin = () => {
               {isLoading ? 'Signing in...' : 'Sign in as Admin'}
             </Button>
 
+            <div className="text-center mt-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                className="text-xs" 
+                onClick={fillTestCredentials}
+              >
+                Fill Admin Credentials
+              </Button>
+            </div>
+
             <div className="flex justify-between items-center text-center mt-4">
               <Button 
                 variant="link" 
@@ -234,6 +252,10 @@ const AdminLogin = () => {
               >
                 Back to Student Login
               </Button>
+            </div>
+            
+            <div className="mt-4 text-center text-xs text-zinc-500">
+              <p>Admin credentials: {defaultCredentials.admin.email} / {defaultCredentials.admin.password}</p>
             </div>
           </form>
         )}

@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { defaultCredentials } from '@/integrations/supabase/client';
 
 const LoginForm = () => {
   const navigate = useNavigate();
@@ -37,6 +38,11 @@ const LoginForm = () => {
     }
   };
 
+  const fillTestCredentials = () => {
+    setEmail(defaultCredentials.student.email);
+    setPassword(defaultCredentials.student.password);
+  };
+
   return (
     <form onSubmit={handleLogin} className="mt-8 space-y-4">
       <div className="space-y-4">
@@ -54,7 +60,7 @@ const LoginForm = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             className="mt-1"
-            placeholder="you@example.com"
+            placeholder="you@example.edu"
             disabled={isLoading}
           />
         </div>
@@ -81,6 +87,18 @@ const LoginForm = () => {
       <Button type="submit" className="w-full" disabled={isLoading}>
         {isLoading ? 'Signing in...' : 'Sign in'}
       </Button>
+      
+      <div className="text-center mt-2">
+        <Button 
+          type="button" 
+          variant="outline" 
+          size="sm"
+          className="text-xs" 
+          onClick={fillTestCredentials}
+        >
+          Fill Test Credentials
+        </Button>
+      </div>
     </form>
   );
 };

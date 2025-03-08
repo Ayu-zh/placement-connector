@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import LoginForm from '@/components/auth/LoginForm';
 import SignUpForm from '@/components/auth/SignUpForm';
 import AuthContainer from '@/components/auth/AuthContainer';
+import { defaultCredentials } from '@/integrations/supabase/client';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -53,8 +54,10 @@ const Index = () => {
               </Button>
             </div>
             
-            <div className="mt-4 text-center text-xs text-zinc-500">
+            <div className="mt-4 text-center text-xs text-zinc-500 space-y-1">
               <p>Sign up to create a new account or use the login for testing</p>
+              <p>Admin login: {defaultCredentials.admin.email} / {defaultCredentials.admin.password}</p>
+              <p>Student login: {defaultCredentials.student.email} / {defaultCredentials.student.password}</p>
             </div>
           </>
         )}
