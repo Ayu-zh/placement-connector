@@ -35,7 +35,12 @@ const AdminLoginForm = ({
     setIsLoading(true);
     
     try {
+      // Add debug logs
+      console.log('Attempting admin login with:', { email });
+      
       const success = await adminLogin(email, password);
+      console.log('Admin login result:', success);
+      
       if (success) {
         toast({
           title: "Admin Login Successful",
@@ -46,6 +51,7 @@ const AdminLoginForm = ({
         setError('Invalid admin credentials or account is not an admin');
       }
     } catch (error: any) {
+      console.error('Admin login error:', error);
       setError(error.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);

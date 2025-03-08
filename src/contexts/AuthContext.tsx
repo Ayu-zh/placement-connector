@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (session?.user) {
       try {
         // First, get the user role from profiles table
-        const { data: profile } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
@@ -113,30 +113,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const adminLogin = async (email: string, password: string): Promise<boolean> => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) {
+    try {
+      // First attempt to sign in
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('Login error:', error.message);
+        return false;
+      }
+      
+      // If successful login, check if user has admin role
+      if (data.user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (profileError) {
+          console.error('Profile error:', profileError.message);
+          // Sign out since we couldn't verify admin status
+          await supabase.auth.signOut();
+          return false;
+        }
+        
+        // Check if the user has admin role
+        if (profile && profile.role === 'admin') {
+          return true;
+        } else {
+          console.error('User does not have admin role:', profile);
+          // Sign out if not an admin
+          await supabase.auth.signOut();
+          return false;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Unexpected error during admin login:', error);
       return false;
     }
-    
-    // Check if user has admin role
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('email', email)
-      .single();
-    
-    if (profile && profile.role === 'admin') {
-      return true;
-    }
-    
-    // If not admin, log out and return false
-    await supabase.auth.signOut();
-    setUser(null);
-    return false;
   };
 
   const updateUserProfile = async (name: string, email: string) => {

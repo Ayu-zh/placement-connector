@@ -46,12 +46,31 @@ const AdminSignUpForm = ({
       
       if (error) throw error;
       
+      // After successful signup, let's insert directly into profiles table to ensure the role is set
+      if (data && data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            name: name,
+            email: email,
+            role: 'admin',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+          
+        if (profileError) {
+          console.error('Error creating admin profile:', profileError);
+        }
+      }
+      
       toast({
         title: "Admin Account Created",
         description: "You can now log in with your admin credentials.",
       });
       setIsSignUp(false);
     } catch (error: any) {
+      console.error('Admin signup error:', error);
       setError(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
