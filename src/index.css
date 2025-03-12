@@ -74,6 +74,11 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  
+  /* Add left alignment as default for all content */
+  h1, h2, h3, h4, h5, h6, p, div:not(.login-container) {
+    @apply text-left;
+  }
 }
 
 /* Add smooth transitions */
@@ -102,9 +107,14 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
-  text-align: center;
 }
 
+/* Login pages should still be centered */
+.login-container {
+  @apply text-center;
+}
+
+/* Fix original App.css classes */
 .logo {
   height: 6em;
   padding: 1.5em;

@@ -20,7 +20,9 @@ export function Layout({ children }: { children: ReactNode }) {
       {!isLoginPage && <Navbar />}
       <div className="flex">
         {user && !isAdminRoute && !isLoginPage && <Sidebar />}
-        <main className={`${isAdminRoute || isLoginPage ? 'w-full' : 'flex-1'} p-6`}>{children}</main>
+        <main className={`${isAdminRoute || isLoginPage ? 'w-full' : 'flex-1'} p-6 ${isLoginPage ? 'login-container' : ''}`}>
+          {children}
+        </main>
       </div>
     </div>
   );
