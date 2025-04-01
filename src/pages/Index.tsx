@@ -1,67 +1,117 @@
 
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import LoginForm from '@/components/auth/LoginForm';
-import SignUpForm from '@/components/auth/SignUpForm';
-import AuthContainer from '@/components/auth/AuthContainer';
-import { defaultCredentials } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const navigate = useNavigate();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const { login } = useAuth();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    try {
+      await login(email, password);
+      navigate('/dashboard');
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+    } catch (error) {
+      console.error('Login failed:', error);
+      toast({
+        title: "Login Failed",
+        description: "Invalid email or password.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div 
       className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 bg-cover bg-center"
       style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80")', }}
     >
-      <AuthContainer 
-        title="College Placement Cell"
-        subtitle={isSignUp ? 'Sign up to create your account' : 'Sign in to access placement opportunities and resources'}
-      >
-        {isSignUp ? (
-          <>
-            <SignUpForm onSuccess={() => setIsSignUp(false)} />
-            <div className="text-center">
-              <Button 
-                variant="link" 
-                onClick={() => setIsSignUp(false)}
-                className="text-sm"
+      <div className="w-full max-w-md space-y-8 bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-xl">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-zinc-900">
+            College Placement Cell
+          </h1>
+          <p className="mt-2 text-sm text-zinc-600">
+            Sign in to access placement opportunities and resources
+          </p>
+        </div>
+
+        <form onSubmit={handleLogin} className="mt-8 space-y-4">
+          <div className="space-y-4">
+            <div>
+              <label 
+                htmlFor="email" 
+                className="block text-sm font-medium text-zinc-700"
               >
-                Already have an account? Sign in
-              </Button>
+                Email address
+              </label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-1"
+                placeholder="you@example.com"
+                disabled={isLoading}
+              />
             </div>
-          </>
-        ) : (
-          <>
-            <LoginForm />
-            <div className="flex flex-col space-y-2 text-center">
-              <Button 
-                variant="link" 
-                onClick={() => setIsSignUp(true)}
-                className="text-sm"
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-zinc-700"
               >
-                Don't have an account? Sign up
-              </Button>
-              
-              <Button 
-                variant="link" 
-                onClick={() => navigate('/admin')}
-                className="text-sm"
-              >
-                Admin Login
-              </Button>
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1"
+                disabled={isLoading}
+              />
             </div>
-            
-            <div className="mt-4 text-center text-xs text-zinc-500 space-y-1">
-              <p>Sign up to create a new account or use the login for testing</p>
-              <p>Admin login: {defaultCredentials.admin.email} / {defaultCredentials.admin.password}</p>
-              <p>Student login: {defaultCredentials.student.email} / {defaultCredentials.student.password}</p>
-            </div>
-          </>
-        )}
-      </AuthContainer>
+          </div>
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign in'}
+          </Button>
+        </form>
+
+        <div className="mt-4 text-center">
+          <Button 
+            variant="link" 
+            onClick={() => navigate('/admin')}
+            className="text-sm"
+            disabled={isLoading}
+          >
+            Admin Login
+          </Button>
+        </div>
+        
+        <div className="mt-4 text-center text-xs text-zinc-500">
+          <p>Try these credentials: rahul.s@college.edu / password123</p>
+        </div>
+      </div>
     </div>
   );
 };

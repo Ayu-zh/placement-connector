@@ -1,38 +1,116 @@
 
 import { useState } from 'react';
-import AdminAuthContainer from '@/components/admin/AdminAuthContainer';
-import AdminLoginForm from '@/components/admin/AdminLoginForm';
-import AdminSignUpForm from '@/components/admin/AdminSignUpForm';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 const AdminLogin = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const navigate = useNavigate();
+  const { adminLogin } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    try {
+      const success = await adminLogin(email, password);
+      if (success) {
+        toast({
+          title: "Admin Login Successful",
+          description: "Welcome to the admin dashboard",
+        });
+        navigate('/admin/dashboard');
+      } else {
+        setError('Invalid admin credentials');
+      }
+    } catch (error) {
+      setError('Login failed. Please try again.');
+    }
+  };
 
   return (
-    <AdminAuthContainer 
-      title="Admin Portal"
-      subtitle={isSignUp ? 'Create a new admin account' : 'Sign in to access the college placement administration'}
-      backgroundImage="https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?auto=format&fit=crop&q=80"
+    <div 
+      className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 bg-cover bg-center"
+      style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1487058792275-0ad4aaf24ca7?auto=format&fit=crop&q=80")', }}
     >
-      {isSignUp ? (
-        <AdminSignUpForm 
-          isLoading={isLoading}
-          error={error}
-          setError={setError}
-          setIsLoading={setIsLoading}
-          setIsSignUp={setIsSignUp}
-        />
-      ) : (
-        <AdminLoginForm 
-          isLoading={isLoading}
-          error={error}
-          setError={setError}
-          setIsLoading={setIsLoading}
-          setIsSignUp={setIsSignUp}
-        />
-      )}
-    </AdminAuthContainer>
+      <div className="w-full max-w-md space-y-8 bg-white/90 backdrop-blur-sm p-8 rounded-lg shadow-xl">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold tracking-tight text-zinc-900">
+            Admin Portal
+          </h1>
+          <p className="mt-2 text-sm text-zinc-600">
+            Sign in to access the college placement administration
+          </p>
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <form onSubmit={handleAdminLogin} className="mt-8 space-y-4">
+          <div className="space-y-4">
+            <div>
+              <label 
+                htmlFor="admin-email" 
+                className="block text-sm font-medium text-zinc-700"
+              >
+                Admin Email
+              </label>
+              <Input
+                id="admin-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-1"
+                placeholder="admin@example.com"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="admin-password"
+                className="block text-sm font-medium text-zinc-700"
+              >
+                Admin Password
+              </label>
+              <Input
+                id="admin-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1"
+              />
+            </div>
+          </div>
+
+          <Button type="submit" className="w-full">
+            Sign in as Admin
+          </Button>
+        </form>
+
+        <div className="text-center mt-4">
+          <Button 
+            variant="link" 
+            onClick={() => navigate('/')}
+            className="text-sm"
+          >
+            Back to Student Login
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
