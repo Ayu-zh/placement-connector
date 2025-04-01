@@ -15,12 +15,17 @@ export function Layout({ children }: { children: ReactNode }) {
   // Check if we're on a login page
   const isLoginPage = location.pathname === '/' || location.pathname === '/admin';
 
+  // Apply center alignment only to login pages
+  const contentClass = isLoginPage ? 'text-center' : '';
+
   return (
     <div className="min-h-screen bg-zinc-50">
       {!isLoginPage && <Navbar />}
       <div className="flex">
         {user && !isAdminRoute && !isLoginPage && <Sidebar />}
-        <main className={`${isAdminRoute || isLoginPage ? 'w-full' : 'flex-1'} p-6`}>{children}</main>
+        <main className={`${isAdminRoute || isLoginPage ? 'w-full' : 'flex-1'} p-6 ${contentClass}`}>
+          {children}
+        </main>
       </div>
     </div>
   );
