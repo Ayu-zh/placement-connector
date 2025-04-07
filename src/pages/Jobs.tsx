@@ -102,7 +102,7 @@ const Jobs = () => {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="text-left">
         <h1 className="text-3xl font-bold tracking-tight">Job Opportunities</h1>
         <p className="text-zinc-500">
           Browse and apply for available positions
@@ -110,7 +110,7 @@ const Jobs = () => {
       </div>
 
       <Tabs defaultValue="upcoming" className="space-y-4">
-        <TabsList>
+        <TabsList className="justify-start">
           <TabsTrigger value="upcoming">Upcoming Jobs</TabsTrigger>
           <TabsTrigger value="applied">Applied Jobs</TabsTrigger>
         </TabsList>
@@ -120,7 +120,7 @@ const Jobs = () => {
             <Card key={job.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-left">
                     <CardTitle className="text-xl">{job.title}</CardTitle>
                     <CardDescription>
                       <div className="flex items-center gap-2">
@@ -135,7 +135,7 @@ const Jobs = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-4 text-left">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -177,7 +177,7 @@ const Jobs = () => {
                         <User className="h-4 w-4" />
                         HR Contact
                       </h4>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground text-left">
                         <p>{job.hrContact.name}</p>
                         <p className="flex items-center gap-1">
                           <Mail className="h-3 w-3" />
@@ -191,7 +191,7 @@ const Jobs = () => {
                         <Users className="h-4 w-4" />
                         Alumni Contact
                       </h4>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground text-left">
                         <p>{job.alumniContact.name} ({job.alumniContact.batch})</p>
                         <p className="flex items-center gap-1">
                           <Mail className="h-3 w-3" />
@@ -211,7 +211,7 @@ const Jobs = () => {
             <Card key={job.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-left">
                     <CardTitle className="text-xl">{job.title}</CardTitle>
                     <CardDescription>
                       <div className="flex items-center gap-2">
@@ -231,7 +231,7 @@ const Jobs = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
+                <div className="space-y-2 text-left">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
