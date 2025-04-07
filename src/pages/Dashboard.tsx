@@ -95,7 +95,7 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8">
-      <div>
+      <div className="text-left">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <p className="text-zinc-500">
           Welcome back, {user?.name}
