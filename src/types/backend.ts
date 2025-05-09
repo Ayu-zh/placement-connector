@@ -17,6 +17,17 @@ export interface Job {
   type: string;
   salary: string;
   deadline: string;
+  requirements: string[];
+  hrContact: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  alumniContact: {
+    name: string;
+    batch: string;
+    email: string;
+  };
 }
 
 // Job application interface
