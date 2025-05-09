@@ -25,6 +25,24 @@ import { useAuth } from '@/contexts/AuthContext';
 import { JobApplication } from '@/types/backend';
 import { useToast } from '@/hooks/use-toast';
 
+// Default placeholders for missing job data
+const defaultRequirements = [
+  "No specific requirements listed",
+  "Contact HR for more information"
+];
+
+const defaultHrContact = {
+  name: "HR Department",
+  email: "hr@company.com",
+  phone: "Contact company for details"
+};
+
+const defaultAlumniContact = {
+  name: "Not available",
+  batch: "-",
+  email: "-"
+};
+
 const Jobs = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -92,7 +110,16 @@ const Jobs = () => {
         setIsLoading(true);
         // Fetch upcoming jobs
         const jobs = await ApiService.jobs.getAll();
-        setUpcomingJobs(jobs);
+        
+        // Ensure all jobs have the required fields with placeholders if missing
+        const processedJobs = jobs.map(job => ({
+          ...job,
+          requirements: job.requirements || [...defaultRequirements],
+          hrContact: job.hrContact || {...defaultHrContact},
+          alumniContact: job.alumniContact || {...defaultAlumniContact}
+        }));
+        
+        setUpcomingJobs(processedJobs);
 
         // Fetch applied jobs if user is logged in
         if (user && user.id) {
