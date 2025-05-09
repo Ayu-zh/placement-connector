@@ -237,7 +237,7 @@ const Jobs = () => {
                   <div className="space-y-2">
                     <h4 className="font-semibold">Requirements</h4>
                     <ul className="list-disc list-inside space-y-1">
-                      {job.requirements.map((req, index) => (
+                      {job.requirements && job.requirements.map((req, index) => (
                         <li key={index} className="text-sm text-muted-foreground">
                           {req}
                         </li>
@@ -252,12 +252,16 @@ const Jobs = () => {
                         HR Contact
                       </h4>
                       <div className="text-sm text-muted-foreground text-left">
-                        <p>{job.hrContact.name}</p>
-                        <p className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {job.hrContact.email}
-                        </p>
-                        <p>{job.hrContact.phone}</p>
+                        {job.hrContact && (
+                          <>
+                            <p>{job.hrContact.name}</p>
+                            <p className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {job.hrContact.email}
+                            </p>
+                            <p>{job.hrContact.phone}</p>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -266,11 +270,15 @@ const Jobs = () => {
                         Alumni Contact
                       </h4>
                       <div className="text-sm text-muted-foreground text-left">
-                        <p>{job.alumniContact.name} ({job.alumniContact.batch})</p>
-                        <p className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          {job.alumniContact.email}
-                        </p>
+                        {job.alumniContact && (
+                          <>
+                            <p>{job.alumniContact.name} ({job.alumniContact.batch})</p>
+                            <p className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {job.alumniContact.email}
+                            </p>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

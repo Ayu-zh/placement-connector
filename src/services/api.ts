@@ -14,6 +14,22 @@ const initializeDatabase = () => {
         type: "Full-time",
         salary: "₹12-15 LPA",
         deadline: "2024-03-25",
+        requirements: [
+          "B.Tech in Computer Science or related field",
+          "Strong programming skills in Java/Python",
+          "Knowledge of web technologies",
+          "0-2 years of experience"
+        ],
+        hrContact: {
+          name: "Sarah Johnson",
+          email: "sarah.j@techcorp.com",
+          phone: "+91 9876543210"
+        },
+        alumniContact: {
+          name: "Rahul Sharma",
+          batch: "2022",
+          email: "rahul.s@techcorp.com"
+        }
       },
       {
         id: 2,
@@ -23,6 +39,22 @@ const initializeDatabase = () => {
         type: "Internship",
         salary: "₹40,000/month",
         deadline: "2024-03-28",
+        requirements: [
+          "Currently pursuing B.Tech",
+          "Strong analytical skills",
+          "Knowledge of SQL and Python",
+          "Statistical analysis experience"
+        ],
+        hrContact: {
+          name: "Priya Patel",
+          email: "priya.p@datasys.com",
+          phone: "+91 9876543211"
+        },
+        alumniContact: {
+          name: "Ankit Kumar",
+          batch: "2023",
+          email: "ankit.k@datasys.com"
+        }
       },
       {
         id: 3,
@@ -32,6 +64,22 @@ const initializeDatabase = () => {
         type: "Full-time",
         salary: "₹10-12 LPA",
         deadline: "2024-04-10",
+        requirements: [
+          "Experience with React/Angular",
+          "CSS/SCSS proficiency",
+          "Frontend performance optimization",
+          "1-3 years of experience"
+        ],
+        hrContact: {
+          name: "Vikram Mehta",
+          email: "vikram.m@webtech.com",
+          phone: "+91 9876543212"
+        },
+        alumniContact: {
+          name: "Sneha Singh",
+          batch: "2021",
+          email: "sneha.s@webtech.com"
+        }
       },
       {
         id: 4,
@@ -41,6 +89,22 @@ const initializeDatabase = () => {
         type: "Full-time",
         salary: "₹18-22 LPA",
         deadline: "2024-04-15",
+        requirements: [
+          "MBA or equivalent",
+          "Product lifecycle experience",
+          "Strong communication skills",
+          "3-5 years of experience"
+        ],
+        hrContact: {
+          name: "Arun Kumar",
+          email: "arun.k@innovlabs.com",
+          phone: "+91 9876543213"
+        },
+        alumniContact: {
+          name: "Divya Gupta",
+          batch: "2019",
+          email: "divya.g@innovlabs.com"
+        }
       }
     ]));
   }
