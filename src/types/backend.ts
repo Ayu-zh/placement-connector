@@ -19,6 +19,18 @@ export interface Job {
   deadline: string;
 }
 
+// Job application interface
+export interface JobApplication {
+  id: string;
+  jobId: number;
+  studentId: string;
+  appliedDate: string;
+  status: 'pending' | 'approved' | 'rejected';
+  studentName: string;
+  jobTitle: string;
+  company: string;
+}
+
 // Student interface with more details
 export interface Student {
   id: string;

@@ -1,5 +1,4 @@
-
-import { Job, Student, StudentCredentials, Certification, Hackathon, TeammateRequest, DashboardStats } from '@/types/backend';
+import { Job, Student, StudentCredentials, Certification, Hackathon, TeammateRequest, DashboardStats, JobApplication } from '@/types/backend';
 import { User, AdminCredentials } from '@/types/auth';
 
 // Mock database using localStorage
@@ -262,6 +261,32 @@ const initializeDatabase = () => {
     };
     
     localStorage.setItem('dashboardStats', JSON.stringify(stats));
+  }
+  
+  // Initialize job applications if not already present
+  if (!localStorage.getItem('jobApplications')) {
+    localStorage.setItem('jobApplications', JSON.stringify([
+      {
+        id: 'app1',
+        jobId: 1,
+        studentId: 's1',
+        appliedDate: '2024-03-20',
+        status: 'pending',
+        studentName: 'Rahul Sharma',
+        jobTitle: 'Frontend Developer',
+        company: 'WebTech Solutions'
+      },
+      {
+        id: 'app2',
+        jobId: 2,
+        studentId: 's1',
+        appliedDate: '2024-02-15',
+        status: 'approved',
+        studentName: 'Rahul Sharma',
+        jobTitle: 'Product Analyst',
+        company: 'Analytics Pro'
+      }
+    ]));
   }
 };
 
@@ -560,6 +585,58 @@ export const ApiService = {
       const requests = JSON.parse(localStorage.getItem('teammateRequests') || '[]') as TeammateRequest[];
       const filteredRequests = requests.filter(r => r.id !== id);
       localStorage.setItem('teammateRequests', JSON.stringify(filteredRequests));
+    }
+  },
+  
+  // Job Applications API
+  jobApplications: {
+    getAll: async (): Promise<JobApplication[]> => {
+      return JSON.parse(localStorage.getItem('jobApplications') || '[]');
+    },
+    
+    getByStudent: async (studentId: string): Promise<JobApplication[]> => {
+      const applications = JSON.parse(localStorage.getItem('jobApplications') || '[]') as JobApplication[];
+      return applications.filter(app => app.studentId === studentId);
+    },
+    
+    getByJob: async (jobId: number): Promise<JobApplication[]> => {
+      const applications = JSON.parse(localStorage.getItem('jobApplications') || '[]') as JobApplication[];
+      return applications.filter(app => app.jobId === jobId);
+    },
+    
+    apply: async (application: Omit<JobApplication, 'id' | 'appliedDate'>): Promise<JobApplication> => {
+      const applications = JSON.parse(localStorage.getItem('jobApplications') || '[]') as JobApplication[];
+      const newId = `app${Math.floor(Math.random() * 10000)}`;
+      
+      const newApplication: JobApplication = {
+        id: newId,
+        ...application,
+        appliedDate: new Date().toISOString().split('T')[0]
+      };
+      
+      applications.push(newApplication);
+      localStorage.setItem('jobApplications', JSON.stringify(applications));
+      return newApplication;
+    },
+    
+    updateStatus: async (id: string, status: 'pending' | 'approved' | 'rejected'): Promise<JobApplication> => {
+      const applications = JSON.parse(localStorage.getItem('jobApplications') || '[]') as JobApplication[];
+      const application = applications.find(app => app.id === id);
+      
+      if (application) {
+        application.status = status;
+        const updatedApplications = applications.map(app => app.id === id ? application : app);
+        localStorage.setItem('jobApplications', JSON.stringify(updatedApplications));
+        return application;
+      }
+      
+      throw new Error('Application not found');
+    },
+    
+    delete: async (id: string): Promise<void> => {
+      const applications = JSON.parse(localStorage.getItem('jobApplications') || '[]') as JobApplication[];
+      const filteredApplications = applications.filter(app => app.id !== id);
+      localStorage.setItem('jobApplications', JSON.stringify(filteredApplications));
     }
   }
 };

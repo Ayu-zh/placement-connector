@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -16,15 +16,20 @@ import {
   Calendar,
   User,
   Users,
-  Link as LinkIcon,
   Check,
   X,
+  Send,
 } from 'lucide-react';
+import { ApiService } from '@/services/api';
+import { useAuth } from '@/contexts/AuthContext';
+import { JobApplication } from '@/types/backend';
+import { useToast } from '@/hooks/use-toast';
 
 const Jobs = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('upcoming');
-
-  const upcomingJobs = [
+  const [upcomingJobs, setUpcomingJobs] = useState([
     {
       id: 1,
       title: "Software Engineer",
@@ -39,7 +44,6 @@ const Jobs = () => {
         "Knowledge of web technologies",
         "0-2 years of experience"
       ],
-      applicationLink: "https://techcorp.com/careers",
       hrContact: {
         name: "Sarah Johnson",
         email: "sarah.j@techcorp.com",
@@ -65,7 +69,6 @@ const Jobs = () => {
         "Knowledge of SQL and Python",
         "Statistical analysis experience"
       ],
-      applicationLink: "https://datasys.com/internships",
       hrContact: {
         name: "Priya Patel",
         email: "priya.p@datasys.com",
@@ -77,28 +80,90 @@ const Jobs = () => {
         email: "ankit.k@datasys.com"
       }
     }
-  ];
+  ]);
 
-  const appliedJobs = [
-    {
-      id: 1,
-      title: "Frontend Developer",
-      company: "WebTech Solutions",
-      appliedDate: "2024-02-20",
-      status: "Interview Scheduled",
-      type: "Full-time",
-      nextStep: "Technical Interview on March 25"
-    },
-    {
-      id: 2,
-      title: "Product Analyst",
-      company: "Analytics Pro",
-      appliedDate: "2024-02-15",
-      status: "Application Under Review",
-      type: "Full-time",
-      nextStep: "Waiting for HR response"
+  const [appliedJobs, setAppliedJobs] = useState<JobApplication[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [applyingToJob, setApplyingToJob] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch upcoming jobs
+        const jobs = await ApiService.jobs.getAll();
+        setUpcomingJobs(jobs);
+
+        // Fetch applied jobs if user is logged in
+        if (user && user.id) {
+          const applications = await ApiService.jobApplications.getByStudent(user.id);
+          setAppliedJobs(applications);
+        }
+      } catch (error) {
+        console.error('Error loading jobs data:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load jobs data",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, toast]);
+
+  const handleApplyNow = async (job) => {
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to apply for this job",
+        variant: "destructive",
+      });
+      return;
     }
-  ];
+
+    try {
+      setApplyingToJob(job.id);
+      
+      const application = {
+        jobId: job.id,
+        studentId: user.id,
+        status: 'pending' as const,
+        studentName: user.name,
+        jobTitle: job.title,
+        company: job.company
+      };
+      
+      await ApiService.jobApplications.apply(application);
+      
+      // Refresh the applied jobs list
+      const updatedApplications = await ApiService.jobApplications.getByStudent(user.id);
+      setAppliedJobs(updatedApplications);
+      
+      toast({
+        title: "Application Submitted",
+        description: "Your application for this job has been sent to the admin for approval",
+        variant: "default",
+      });
+      
+      setActiveTab('applied');
+    } catch (error) {
+      console.error('Error applying for job:', error);
+      toast({
+        title: "Application Failed",
+        description: "Failed to apply for this job",
+        variant: "destructive",
+      });
+    } finally {
+      setApplyingToJob(null);
+    }
+  };
+
+  const isAlreadyApplied = (jobId) => {
+    return appliedJobs.some(job => job.jobId === jobId);
+  };
 
   return (
     <div className="space-y-6">
@@ -109,7 +174,7 @@ const Jobs = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="upcoming" className="space-y-4">
+      <Tabs defaultValue="upcoming" className="space-y-4" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="justify-start">
           <TabsTrigger value="upcoming">Upcoming Jobs</TabsTrigger>
           <TabsTrigger value="applied">Applied Jobs</TabsTrigger>
@@ -129,8 +194,23 @@ const Jobs = () => {
                       </div>
                     </CardDescription>
                   </div>
-                  <Button>
-                    Apply Now
+                  <Button 
+                    onClick={() => handleApplyNow(job)} 
+                    disabled={isAlreadyApplied(job.id) || applyingToJob === job.id}
+                  >
+                    {isAlreadyApplied(job.id) ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Applied
+                      </>
+                    ) : applyingToJob === job.id ? (
+                      "Applying..."
+                    ) : (
+                      <>
+                        <Send className="h-4 w-4 mr-2" />
+                        Apply Now
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardHeader>
@@ -150,12 +230,6 @@ const Jobs = () => {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm font-medium">
                         Salary: {job.salary}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <LinkIcon className="h-4 w-4" />
-                        <a href={job.applicationLink} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">
-                          Application Link
-                        </a>
                       </div>
                     </div>
                   </div>
@@ -207,50 +281,58 @@ const Jobs = () => {
         </TabsContent>
 
         <TabsContent value="applied" className="space-y-4">
-          {appliedJobs.map((job) => (
-            <Card key={job.id}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1 text-left">
-                    <CardTitle className="text-xl">{job.title}</CardTitle>
-                    <CardDescription>
-                      <div className="flex items-center gap-2">
-                        <Building className="h-4 w-4" />
-                        {job.company}
-                      </div>
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {job.status === "Interview Scheduled" ? (
-                      <Check className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <X className="h-5 w-5 text-yellow-500" />
-                    )}
-                    <span className="text-sm font-medium">{job.status}</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-left">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Briefcase className="h-4 w-4" />
-                        {job.type}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        Applied: {job.appliedDate}
-                      </div>
+          {isLoading ? (
+            <div className="text-center py-4">Loading applied jobs...</div>
+          ) : appliedJobs.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              You haven't applied to any jobs yet.
+            </div>
+          ) : (
+            appliedJobs.map((job) => (
+              <Card key={job.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1 text-left">
+                      <CardTitle className="text-xl">{job.jobTitle}</CardTitle>
+                      <CardDescription>
+                        <div className="flex items-center gap-2">
+                          <Building className="h-4 w-4" />
+                          {job.company}
+                        </div>
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {job.status === "approved" ? (
+                        <Check className="h-5 w-5 text-green-500" />
+                      ) : job.status === "rejected" ? (
+                        <X className="h-5 w-5 text-red-500" />
+                      ) : (
+                        <div className="h-3 w-3 bg-yellow-500 rounded-full"></div>
+                      )}
+                      <span className="text-sm font-medium capitalize">{job.status}</span>
                     </div>
                   </div>
-                  <div className="pt-2 text-sm text-muted-foreground">
-                    Next Step: {job.nextStep}
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2 text-left">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          Applied: {job.appliedDate}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pt-2 text-sm text-muted-foreground">
+                      {job.status === "pending" && "Your application is waiting for admin approval."}
+                      {job.status === "approved" && "Congratulations! Your application has been approved."}
+                      {job.status === "rejected" && "Sorry, your application was not selected at this time."}
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            ))
+          )}
         </TabsContent>
       </Tabs>
     </div>
